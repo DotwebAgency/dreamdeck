@@ -12,7 +12,7 @@ import {
   Plus,
   Layers
 } from 'lucide-react';
-import { useGenerationStore, useCanGenerate, useActiveJobs } from '@/store/useGenerationStore';
+import { useGenerationStore, useCanGenerate, useActiveJobCount } from '@/store/useGenerationStore';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
 import { COST_PER_IMAGE, MAX_QUEUED_JOBS } from '@/lib/constants';
@@ -33,7 +33,7 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
   } = useGenerationStore();
 
   const canGenerate = useCanGenerate();
-  const activeJobs = useActiveJobs();
+  const activeJobCount = useActiveJobCount(); // Use count (number) instead of array
   
   const [isPromptExpanded, setIsPromptExpanded] = useState(false);
   const [showActions, setShowActions] = useState(false);
@@ -75,7 +75,7 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
   };
 
   const hasResults = results.length > 0;
-  const activeCount = activeJobs.length;
+  const activeCount = activeJobCount;
   const estimatedCost = numImages * COST_PER_IMAGE;
   const isQueueActive = activeCount > 0;
 

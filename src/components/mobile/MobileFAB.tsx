@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { Sparkles, Plus, Sliders, Layers } from 'lucide-react';
-import { useGenerationStore, useCanGenerate, useActiveJobs } from '@/store/useGenerationStore';
+import { useGenerationStore, useCanGenerate, useActiveJobCount } from '@/store/useGenerationStore';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
 import { MAX_QUEUED_JOBS } from '@/lib/constants';
@@ -20,10 +20,9 @@ export function MobileFAB({ onSettingsClick }: MobileFABProps) {
   } = useGenerationStore();
 
   const canGenerate = useCanGenerate();
-  const activeJobs = useActiveJobs();
+  const activeCount = useActiveJobCount(); // Use count (number) instead of array
   const [showMenu, setShowMenu] = useState(false);
   
-  const activeCount = activeJobs.length;
   const isQueueActive = activeCount > 0;
 
   const handleGenerate = useCallback(() => {

@@ -308,19 +308,19 @@ export const useAutoSave = () => useGenerationStore((state) => state.autoSave);
 // Use the raw jobs array (stable reference from store)
 export const useJobs = () => useGenerationStore((state) => state.jobs);
 
-// Derived array selectors - these return new arrays but that's ok for display purposes
-// The infinite loop was fixed in JobQueue by using getState() outside the component
-export const useActiveJobs = () => useGenerationStore(
-  (state) => state.jobs.filter(j => j.status === 'processing' || j.status === 'queued')
+// COUNT selectors - these return primitives (numbers) which are stable
+// Use these instead of array selectors to prevent infinite re-renders
+export const useActiveJobCount = () => useGenerationStore(
+  (state) => state.jobs.filter(j => j.status === 'processing' || j.status === 'queued').length
 );
-export const useProcessingJobs = () => useGenerationStore(
-  (state) => state.jobs.filter(j => j.status === 'processing')
+export const useProcessingJobCount = () => useGenerationStore(
+  (state) => state.jobs.filter(j => j.status === 'processing').length
 );
-export const useQueuedJobs = () => useGenerationStore(
-  (state) => state.jobs.filter(j => j.status === 'queued')
+export const useQueuedJobCount = () => useGenerationStore(
+  (state) => state.jobs.filter(j => j.status === 'queued').length
 );
-export const useCompletedJobs = () => useGenerationStore(
-  (state) => state.jobs.filter(j => j.status === 'completed')
+export const useCompletedJobCount = () => useGenerationStore(
+  (state) => state.jobs.filter(j => j.status === 'completed').length
 );
 
 // === COMPUTED SELECTORS ===

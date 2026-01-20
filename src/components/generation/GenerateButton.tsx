@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Sparkles, Zap, Plus, Layers } from 'lucide-react';
-import { useGenerationStore, useCanGenerate, useActiveJobs } from '@/store/useGenerationStore';
+import { useGenerationStore, useCanGenerate, useActiveJobCount } from '@/store/useGenerationStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
@@ -18,7 +18,7 @@ export function GenerateButton() {
   } = useGenerationStore();
   
   const canGenerate = useCanGenerate();
-  const activeJobs = useActiveJobs();
+  const activeCount = useActiveJobCount(); // Use count (number) instead of array
   const [isAdding, setIsAdding] = useState(false);
   
   const handleGenerate = useCallback(() => {
@@ -53,7 +53,6 @@ export function GenerateButton() {
 
   const estimatedCost = numImages * COST_PER_IMAGE;
   const is4K = resolution.width >= 4000 || resolution.height >= 4000;
-  const activeCount = activeJobs.length;
 
   return (
     <div className="space-y-4">
