@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// === VERCEL CONFIGURATION ===
+// Increase timeout for 4K image generation
+export const runtime = 'nodejs';
+export const maxDuration = 60; // 60 seconds max
+
 const WAVESPEED_API_KEY = process.env.WAVESPEED_API_KEY!;
 const WAVESPEED_BASE_URL = process.env.WAVESPEED_BASE_URL || 'https://api.wavespeed.ai';
 
@@ -103,9 +108,12 @@ export async function POST(request: NextRequest) {
     const payload: Record<string, unknown> = {
       prompt,
       size: `${width}*${height}`,
-      max_images: num_images,  // CORRECT: max_images, not num_images
+      max_images: num_images,
       enable_sync_mode: true,
       enable_base64_output: false,
+      // OUTPUT FORMAT: Request PNG for lossless quality on high-res images
+      // For standard res, JPEG is fine and faster
+      ...(width >= 2048 || height >= 2048 ? { output_format: 'png' } : {}),
     };
 
     // Add images if present (for edit mode)
@@ -156,6 +164,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { success: false, error: 'Rate limited. Please wait before trying again.' },
           { status: 429 }
+        );
+      }
+      
+      // Handle payload too large error specifically
+      if (response.status === 413) {
+        return NextResponse.json(
+          { success: false, error: 'Request too large. Try with fewer or smaller reference images.' },
+          { status: 413 }
         );
       }
 
@@ -235,6 +251,15 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('[API] Generation error:', error);
+    
+    // Handle specific error types
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid request format.' },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { success: false, error: 'Internal server error. Please try again.' },
       { status: 500 }

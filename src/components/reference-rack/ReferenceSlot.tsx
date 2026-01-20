@@ -3,21 +3,37 @@
 import { useCallback, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ImagePlus, X, Star, GripVertical, Link, Loader2 } from 'lucide-react';
+import { ImagePlus, X, Star, GripVertical, Link, Loader2, Info } from 'lucide-react';
 import { useGenerationStore, ReferenceImage } from '@/store/useGenerationStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { compressImage, compressDataUrl } from '@/lib/imageUtils';
+import { compressImageWithStats, formatFileSize, CompressionResult } from '@/lib/imageUtils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface ReferenceSlotProps {
   index: number;
   slot: ReferenceImage | null;
 }
 
+// Store compression stats per slot
+interface CompressionStats {
+  originalSize: string;
+  compressedSize: string;
+  dimensions: string;
+  quality: number;
+  format: string;
+}
+
 export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
   const { setSlot, removeSlot } = useGenerationStore();
   const [isDragOver, setIsDragOver] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [compressionStats, setCompressionStats] = useState<CompressionStats | null>(null);
 
   const {
     attributes,
@@ -63,12 +79,24 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
       if (!file.type.startsWith('image/')) return;
 
       setIsCompressing(true);
+      setCompressionStats(null);
+      
       try {
-        // Compress image to avoid 413 Payload Too Large errors
-        const compressedUrl = await compressImage(file);
+        // Use smart compression with stats
+        const result: CompressionResult = await compressImageWithStats(file);
+        
+        // Store stats for display
+        setCompressionStats({
+          originalSize: formatFileSize(result.originalSize),
+          compressedSize: formatFileSize(result.compressedSize),
+          dimensions: `${result.finalDimensions.width}×${result.finalDimensions.height}`,
+          quality: Math.round(result.quality * 100),
+          format: result.format.toUpperCase(),
+        });
+        
         setSlot(index, {
           id: `local-${Date.now()}`,
-          url: compressedUrl,
+          url: result.dataUrl,
           type: 'local',
           name: file.name,
         });
@@ -96,6 +124,8 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
   const handleUrlPaste = useCallback(
     (url: string) => {
       if (isImageUrl(url)) {
+        // Clear compression stats for URL images (no compression)
+        setCompressionStats(null);
         setSlot(index, {
           id: `url-${Date.now()}`,
           url,
@@ -175,6 +205,12 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
     input.click();
   }, [handleFile]);
 
+  // Handle remove - also clear stats
+  const handleRemove = useCallback(() => {
+    removeSlot(index);
+    setCompressionStats(null);
+  }, [index, removeSlot]);
+
   return (
     <div
       ref={setNodeRef}
@@ -229,6 +265,38 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
             </div>
           )}
 
+          {/* Compression quality badge - shows when we have stats */}
+          {compressionStats && slot.type === 'local' && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="absolute bottom-1 right-1 p-0.5 rounded-[var(--radius-xs)] bg-black/70 cursor-help">
+                    <span className={cn(
+                      'text-[8px] font-mono px-1',
+                      compressionStats.quality >= 80 ? 'text-green-400' :
+                      compressionStats.quality >= 65 ? 'text-amber-400' :
+                      'text-red-400'
+                    )}>
+                      {compressionStats.quality}%
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[200px]">
+                  <div className="text-[11px] space-y-1">
+                    <p className="font-medium">Compression Stats</p>
+                    <div className="text-[10px] text-[var(--text-muted)] space-y-0.5">
+                      <p>Original: {compressionStats.originalSize}</p>
+                      <p>Compressed: {compressionStats.compressedSize}</p>
+                      <p>Dimensions: {compressionStats.dimensions}</p>
+                      <p>Format: {compressionStats.format}</p>
+                      <p>Quality: {compressionStats.quality}%</p>
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
           {/* Overlay on hover - FLAT solid color */}
           <div
             className={cn(
@@ -261,7 +329,7 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => removeSlot(index)}
+            onClick={handleRemove}
             className={cn(
               'absolute top-1 right-1',
               'w-5 h-5 p-0',
