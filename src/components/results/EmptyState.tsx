@@ -1,6 +1,6 @@
 'use client';
 
-import { Wand2, ImagePlus, Settings2, Loader2 } from 'lucide-react';
+import { Wand2, ImagePlus, Settings2, Loader2, Sparkles, Type, Sliders, Image as ImageIcon } from 'lucide-react';
 import { OrbitAnimation } from '@/components/ui/orbit-animation';
 import { cn } from '@/lib/utils';
 import { useActiveJobCount, useProcessingJobCount, useQueuedJobCount } from '@/store/useGenerationStore';
@@ -17,13 +17,13 @@ export function EmptyState() {
         className={cn(
           'flex items-center justify-center',
           'min-h-[calc(100vh-56px-80px)]',
-          'p-8',
+          'p-6 sm:p-8',
           'animate-fade-in'
         )}
       >
         <div className="text-center max-w-lg w-full">
           {/* Processing animation */}
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-6 sm:mb-8">
             <div className="relative">
               <OrbitAnimation size="lg" />
               <div className="absolute inset-0 flex items-center justify-center">
@@ -35,9 +35,9 @@ export function EmptyState() {
           {/* Status */}
           <h2 
             className={cn(
-              'text-xl font-medium tracking-tight',
+              'text-lg sm:text-xl font-medium tracking-tight',
               'text-[var(--text-primary)]',
-              'mb-3'
+              'mb-2 sm:mb-3'
             )}
           >
             Creating your images
@@ -47,7 +47,7 @@ export function EmptyState() {
             className={cn(
               'text-[13px] leading-relaxed',
               'text-[var(--text-muted)]',
-              'mb-6 max-w-sm mx-auto'
+              'mb-4 sm:mb-6 max-w-sm mx-auto'
             )}
           >
             {processingCount > 0 && `${processingCount} generating`}
@@ -66,46 +66,108 @@ export function EmptyState() {
       </div>
     );
   }
+
   return (
     <div 
       className={cn(
         'flex items-center justify-center',
-        'min-h-[calc(100vh-56px-80px)]', // viewport - header - reference rack
-        'p-8',
+        'min-h-[calc(100vh-56px-80px)]',
+        'p-4 sm:p-8',
         'animate-fade-in'
       )}
     >
-      <div className="text-center max-w-lg w-full">
-        {/* Jarvis-style animated orbit */}
-        <div className="flex justify-center mb-8">
-          <OrbitAnimation size="lg" />
+      <div className="text-center w-full max-w-lg">
+        {/* Mobile: Simple icon, Desktop: Orbit animation */}
+        <div className="flex justify-center mb-6 sm:mb-8">
+          {/* Mobile version - simpler */}
+          <div className="sm:hidden">
+            <div className={cn(
+              'w-20 h-20 rounded-2xl',
+              'bg-gradient-to-br from-[var(--bg-soft)] to-[var(--bg-deep)]',
+              'border border-[var(--border-subtle)]',
+              'flex items-center justify-center',
+              'shadow-lg'
+            )}>
+              <Sparkles className="w-8 h-8 text-[var(--text-muted)]" />
+            </div>
+          </div>
+          {/* Desktop version - orbit animation */}
+          <div className="hidden sm:block">
+            <OrbitAnimation size="lg" />
+          </div>
         </div>
 
-        {/* Title - properly sized for SaaS */}
+        {/* Title */}
         <h2 
           className={cn(
-            'text-xl font-medium tracking-tight',
+            'text-lg sm:text-xl font-medium tracking-tight',
             'text-[var(--text-primary)]',
-            'mb-3'
+            'mb-2 sm:mb-3'
           )}
         >
           Ready to create
         </h2>
 
-        {/* Description */}
+        {/* Description - shorter on mobile */}
         <p 
           className={cn(
             'text-[13px] leading-relaxed',
             'text-[var(--text-muted)]',
-            'mb-8 max-w-sm mx-auto'
+            'mb-6 sm:mb-8 max-w-sm mx-auto px-4 sm:px-0'
           )}
         >
-          Describe your vision in the prompt field and generate stunning images. 
-          Add references to guide the style.
+          <span className="sm:hidden">Write a prompt below to generate images</span>
+          <span className="hidden sm:inline">Describe your vision in the prompt field and generate stunning images. Add references to guide the style.</span>
         </p>
 
-        {/* Quick tips with staggered animation */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left stagger-children">
+        {/* Mobile: Simplified single-column steps */}
+        <div className="sm:hidden px-2">
+          <div className="flex flex-col gap-3">
+            {[
+              { icon: Type, label: 'Write prompt', desc: 'Describe what you want' },
+              { icon: Sliders, label: 'Pick resolution', desc: 'Choose image size' },
+              { icon: ImageIcon, label: 'Generate', desc: 'Create your images' },
+            ].map((step, i) => (
+              <div 
+                key={i}
+                className={cn(
+                  'flex items-center gap-4 p-4',
+                  'bg-[var(--bg-deep)]',
+                  'rounded-xl',
+                  'border border-[var(--border-subtle)]'
+                )}
+              >
+                <div className={cn(
+                  'w-10 h-10 rounded-lg flex-shrink-0',
+                  'bg-[var(--bg-soft)]',
+                  'flex items-center justify-center',
+                  'text-[var(--text-muted)]'
+                )}>
+                  <step.icon className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <div className="text-[13px] font-medium text-[var(--text-primary)]">
+                    {step.label}
+                  </div>
+                  <div className="text-[11px] text-[var(--text-muted)]">
+                    {step.desc}
+                  </div>
+                </div>
+                <div className={cn(
+                  'ml-auto w-6 h-6 rounded-full',
+                  'bg-[var(--bg-soft)]',
+                  'flex items-center justify-center',
+                  'text-[10px] font-medium text-[var(--text-subtle)]'
+                )}>
+                  {i + 1}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop: Original 3-column grid */}
+        <div className="hidden sm:grid grid-cols-3 gap-3 text-left stagger-children">
           <div 
             className={cn(
               'p-3.5 rounded-lg',
@@ -221,8 +283,8 @@ export function EmptyState() {
           </div>
         </div>
 
-        {/* Keyboard shortcut */}
-        <div className="mt-8 pt-5 border-t border-[var(--border-subtle)]">
+        {/* Keyboard shortcut - desktop only */}
+        <div className="hidden sm:block mt-8 pt-5 border-t border-[var(--border-subtle)]">
           <p className="text-[12px] text-[var(--text-subtle)]">
             Pro tip: Press{' '}
             <kbd 
@@ -251,6 +313,13 @@ export function EmptyState() {
               Enter
             </kbd>
             {' '}to generate instantly
+          </p>
+        </div>
+
+        {/* Mobile: Simple tap instruction */}
+        <div className="sm:hidden mt-6 pt-4 border-t border-[var(--border-subtle)]">
+          <p className="text-[11px] text-[var(--text-subtle)]">
+            Tap the prompt bar below to get started
           </p>
         </div>
       </div>
