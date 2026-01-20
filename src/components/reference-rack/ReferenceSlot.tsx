@@ -3,10 +3,11 @@
 import { useCallback, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ImagePlus, X, Star, GripVertical, Link } from 'lucide-react';
+import { ImagePlus, X, Star, GripVertical, Link, Loader2 } from 'lucide-react';
 import { useGenerationStore, ReferenceImage } from '@/store/useGenerationStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { compressImage, compressDataUrl } from '@/lib/imageUtils';
 
 interface ReferenceSlotProps {
   index: number;
@@ -16,6 +17,7 @@ interface ReferenceSlotProps {
 export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
   const { setSlot, removeSlot } = useGenerationStore();
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const {
     attributes,
@@ -57,20 +59,36 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
   };
 
   const handleFile = useCallback(
-    (file: File) => {
+    async (file: File) => {
       if (!file.type.startsWith('image/')) return;
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const url = e.target?.result as string;
+      setIsCompressing(true);
+      try {
+        // Compress image to avoid 413 Payload Too Large errors
+        const compressedUrl = await compressImage(file);
         setSlot(index, {
           id: `local-${Date.now()}`,
-          url,
+          url: compressedUrl,
           type: 'local',
           name: file.name,
         });
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Failed to compress image:', error);
+        // Fallback to original if compression fails
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const url = e.target?.result as string;
+          setSlot(index, {
+            id: `local-${Date.now()}`,
+            url,
+            type: 'local',
+            name: file.name,
+          });
+        };
+        reader.readAsDataURL(file);
+      } finally {
+        setIsCompressing(false);
+      }
     },
     [index, setSlot]
   );
@@ -92,7 +110,7 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
   );
 
   const handleDrop = useCallback(
-    (e: React.DragEvent) => {
+    async (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragOver(false);
 
@@ -105,7 +123,7 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
       // File drop
       const files = e.dataTransfer.files;
       if (files.length > 0) {
-        handleFile(files[0]);
+        await handleFile(files[0]);
       }
     },
     [handleFile, handleUrlPaste]
@@ -121,7 +139,7 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
   }, []);
 
   const handlePaste = useCallback(
-    (e: React.ClipboardEvent) => {
+    async (e: React.ClipboardEvent) => {
       // Check for URL in clipboard
       const text = e.clipboardData.getData('text/plain');
       if (text && handleUrlPaste(text)) {
@@ -136,7 +154,7 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
         if (item.type.startsWith('image/')) {
           const file = item.getAsFile();
           if (file) {
-            handleFile(file);
+            await handleFile(file);
             e.preventDefault();
           }
           break;
@@ -150,9 +168,9 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) handleFile(file);
+      if (file) await handleFile(file);
     };
     input.click();
   }, [handleFile]);
@@ -279,23 +297,29 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
           onDragLeave={handleDragLeave}
           onPaste={handlePaste}
           tabIndex={0}
+          disabled={isCompressing}
           className={cn(
             'w-full h-full rounded-[var(--radius-sm)]',
             'border border-dashed',
             'flex flex-col items-center justify-center gap-1',
             'transition-all duration-150',
             'focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)]',
+            'disabled:opacity-50 disabled:cursor-wait',
             isDragOver
               ? 'border-[var(--text-secondary)] bg-[var(--bg-soft)]'
               : 'border-[var(--border-default)] bg-[var(--bg-deep)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-mid)]'
           )}
         >
-          <ImagePlus
-            className={cn(
-              'w-4 h-4',
-              isDragOver ? 'text-[var(--text-secondary)]' : 'text-[var(--text-muted)]'
-            )}
-          />
+          {isCompressing ? (
+            <Loader2 className="w-4 h-4 text-[var(--text-muted)] animate-spin" />
+          ) : (
+            <ImagePlus
+              className={cn(
+                'w-4 h-4',
+                isDragOver ? 'text-[var(--text-secondary)]' : 'text-[var(--text-muted)]'
+              )}
+            />
+          )}
           <span
             className={cn(
               'text-[10px] font-mono font-medium',
@@ -304,7 +328,7 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
               index < 3 ? 'text-[var(--text-secondary)]' : 'text-[var(--text-muted)]'
             )}
           >
-            {index + 1}
+            {isCompressing ? '...' : index + 1}
           </span>
         </button>
       )}
