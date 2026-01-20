@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Sparkles, Loader2, Sliders } from 'lucide-react';
-import { useGenerationStore } from '@/store/useGenerationStore';
+import { Sparkles, Plus, Sliders, Layers } from 'lucide-react';
+import { useGenerationStore, useCanGenerate, useActiveJobs } from '@/store/useGenerationStore';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
-import { triggerBalanceRefresh } from '@/lib/events';
+import { MAX_QUEUED_JOBS } from '@/lib/constants';
 
 interface MobileFABProps {
   onSettingsClick: () => void;
@@ -15,115 +15,54 @@ export function MobileFAB({ onSettingsClick }: MobileFABProps) {
   const {
     prompt,
     resolution,
-    seed,
     numImages,
-    mode,
-    referenceSlots,
-    isGenerating,
-    setIsGenerating,
-    addResults,
+    createJob,
   } = useGenerationStore();
 
-  const [progress, setProgress] = useState(0);
+  const canGenerate = useCanGenerate();
+  const activeJobs = useActiveJobs();
   const [showMenu, setShowMenu] = useState(false);
+  
+  const activeCount = activeJobs.length;
+  const isQueueActive = activeCount > 0;
 
-  const canGenerate = prompt.trim().length > 0 && !isGenerating;
-
-  const handleGenerate = useCallback(async () => {
-    if (!canGenerate) return;
-
-    setIsGenerating(true);
-    setProgress(0);
+  const handleGenerate = useCallback(() => {
+    if (!prompt.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Prompt required',
+        description: 'Please enter a prompt first.',
+      });
+      return;
+    }
     
     if (navigator.vibrate) {
       navigator.vibrate(30);
     }
 
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => Math.min(prev + Math.random() * 10, 90));
-    }, 800);
-
-    try {
-      const validSlots = referenceSlots
-        .map((slot, index) => ({ slot, index }))
-        .filter((item) => item.slot !== null);
-
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt,
-          width: resolution.width,
-          height: resolution.height,
-          seed: seed === -1 ? undefined : seed,
-          num_images: numImages,
-          mode,
-          reference_images: validSlots.map((item) => ({
-            url: item.slot!.url,
-            priority: item.index,
-          })),
-        }),
+    const jobId = createJob();
+    
+    if (jobId) {
+      toast({
+        title: 'Added to queue',
+        description: `${resolution.width}×${resolution.height} • ${numImages} image${numImages > 1 ? 's' : ''}`,
       });
-
-      clearInterval(progressInterval);
-      setProgress(100);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Generation failed`);
+      
+      if (navigator.vibrate) {
+        navigator.vibrate([30, 50, 30]);
       }
-
-      const data = await response.json();
-
-      if (data.images && data.images.length > 0) {
-        const newResults = data.images.map((url: string, i: number) => ({
-          id: `${Date.now()}-${i}`,
-          url,
-          prompt,
-          width: resolution.width,
-          height: resolution.height,
-          seed: data.seed || seed,
-          timestamp: Date.now(),
-        }));
-
-        addResults(newResults);
-        
-        if (navigator.vibrate) {
-          navigator.vibrate([30, 50, 30]);
-        }
-
-        toast({
-          title: `Created ${data.images.length} image${data.images.length > 1 ? 's' : ''}`,
-        });
-
-        triggerBalanceRefresh();
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Generation failed';
+    } else {
       toast({
         variant: 'destructive',
-        title: message,
+        title: 'Queue full',
+        description: `Maximum ${MAX_QUEUED_JOBS} jobs allowed.`,
       });
       
       if (navigator.vibrate) {
         navigator.vibrate(100);
       }
-    } finally {
-      clearInterval(progressInterval);
-      setIsGenerating(false);
-      setTimeout(() => setProgress(0), 500);
     }
-  }, [
-    canGenerate,
-    prompt,
-    resolution,
-    seed,
-    numImages,
-    mode,
-    referenceSlots,
-    setIsGenerating,
-    addResults,
-  ]);
+  }, [prompt, resolution, numImages, createJob]);
 
   const handleLongPress = useCallback(() => {
     if (navigator.vibrate) {
@@ -161,53 +100,44 @@ export function MobileFAB({ onSettingsClick }: MobileFABProps) {
 
         {/* Main FAB */}
         <button
-          onClick={isGenerating ? undefined : handleGenerate}
+          onClick={handleGenerate}
           onContextMenu={(e) => {
             e.preventDefault();
             handleLongPress();
           }}
-          disabled={!canGenerate && !isGenerating}
+          disabled={!canGenerate}
           className={cn(
             'relative',
             'w-16 h-16 rounded-full',
             'flex items-center justify-center',
             'shadow-xl',
             'transition-all duration-200',
-            canGenerate && !isGenerating
+            canGenerate
               ? 'bg-white active:scale-95'
-              : 'bg-[var(--bg-soft)]',
-            isGenerating && 'animate-pulse'
+              : 'bg-[var(--bg-soft)]'
           )}
         >
-          {/* Progress ring */}
-          {isGenerating && progress > 0 && (
-            <svg className="absolute inset-0 w-full h-full -rotate-90">
-              <circle
-                cx="32"
-                cy="32"
-                r="30"
-                strokeWidth="4"
-                stroke="rgba(255,255,255,0.2)"
-                fill="none"
-              />
-              <circle
-                cx="32"
-                cy="32"
-                r="30"
-                strokeWidth="4"
-                stroke="var(--bg-void)"
-                fill="none"
-                strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 30}`}
-                strokeDashoffset={`${2 * Math.PI * 30 * (1 - progress / 100)}`}
-                className="transition-all duration-300"
-              />
-            </svg>
+          {/* Active jobs badge */}
+          {activeCount > 0 && (
+            <div className={cn(
+              'absolute -top-1 -right-1',
+              'w-6 h-6 rounded-full',
+              'bg-emerald-500 text-white',
+              'flex items-center justify-center',
+              'text-[10px] font-semibold',
+              'shadow-lg',
+              'animate-pulse'
+            )}>
+              {activeCount}
+            </div>
           )}
 
           {/* Icon */}
-          {isGenerating ? (
-            <Loader2 className="w-7 h-7 text-[var(--bg-void)] animate-spin" />
+          {isQueueActive ? (
+            <Plus className={cn(
+              'w-7 h-7',
+              canGenerate ? 'text-[var(--bg-void)]' : 'text-[var(--text-muted)]'
+            )} />
           ) : (
             <Sparkles className={cn(
               'w-7 h-7',
@@ -217,7 +147,7 @@ export function MobileFAB({ onSettingsClick }: MobileFABProps) {
         </button>
 
         {/* Pulse animation */}
-        {canGenerate && !isGenerating && (
+        {canGenerate && !isQueueActive && (
           <div className={cn(
             'absolute inset-0 rounded-full',
             'bg-white/30',

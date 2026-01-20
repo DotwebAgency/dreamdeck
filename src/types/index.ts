@@ -2,6 +2,32 @@
 // DREAMDECK TYPE DEFINITIONS
 // ============================================
 
+// === JOB QUEUE TYPES ===
+export type JobStatus = 'queued' | 'processing' | 'completed' | 'failed';
+
+export interface GenerationJob {
+  id: string;
+  status: JobStatus;
+  progress: number; // 0-100
+  
+  // Settings snapshot (immutable once created)
+  prompt: string;
+  resolution: { width: number; height: number };
+  seed: number;
+  numImages: number;
+  mode: GenerationMode;
+  referenceImages: { url: string; priority: number }[];
+  
+  // Timing
+  createdAt: number;
+  startedAt?: number;
+  completedAt?: number;
+  
+  // Results
+  results?: GeneratedImage[];
+  error?: string;
+}
+
 // === IMAGE SLOT TYPES ===
 export interface ImageSlot {
   id: string;

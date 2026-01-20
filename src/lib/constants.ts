@@ -46,6 +46,14 @@ export const MAX_IMAGES = 15;  // API supports up to 15!
 export const MIN_SEED = -1;
 export const MAX_SEED = 2147483647;
 
+// === JOB QUEUE CONFIGURATION ===
+export const MAX_CONCURRENT_JOBS = 3;  // Process up to 3 jobs simultaneously
+export const MAX_QUEUED_JOBS = 10;     // Maximum jobs in queue
+
+// === DEFAULT RESOLUTION (9:16 4K - Story format) ===
+export const DEFAULT_RESOLUTION = { width: 2304, height: 4096 };
+export const DEFAULT_QUALITY_TAB = 'max' as const;
+
 // === API CONFIGURATION ===
 export const WAVESPEED_MODELS = {
   SEEDREAM_V45: 'bytedance/seedream-v4.5',

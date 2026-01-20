@@ -1,22 +1,21 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { 
   Sparkles, 
   RefreshCw, 
-  Loader2, 
   ChevronUp, 
   History,
-  RotateCcw,
   Trash2,
   MoreHorizontal,
-  X
+  X,
+  Plus,
+  Layers
 } from 'lucide-react';
-import { useGenerationStore } from '@/store/useGenerationStore';
+import { useGenerationStore, useCanGenerate, useActiveJobs } from '@/store/useGenerationStore';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
-import { triggerBalanceRefresh } from '@/lib/events';
-import { COST_PER_IMAGE } from '@/lib/constants';
+import { COST_PER_IMAGE, MAX_QUEUED_JOBS } from '@/lib/constants';
 
 interface MobileBottomBarProps {
   onSettingsClick: () => void;
@@ -28,54 +27,19 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
     prompt,
     setPrompt,
     resolution,
-    seed,
     numImages,
-    mode,
-    referenceSlots,
-    isGenerating,
-    setIsGenerating,
-    addResults,
+    createJob,
     results,
   } = useGenerationStore();
 
-  const [progress, setProgress] = useState(0);
-  const [elapsedTime, setElapsedTime] = useState(0);
+  const canGenerate = useCanGenerate();
+  const activeJobs = useActiveJobs();
+  
   const [isPromptExpanded, setIsPromptExpanded] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [lastSeed, setLastSeed] = useState<number | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const startTimeRef = useRef<number | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Timer effect
-  useEffect(() => {
-    if (isGenerating) {
-      startTimeRef.current = Date.now();
-      timerRef.current = setInterval(() => {
-        if (startTimeRef.current) {
-          setElapsedTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
-        }
-      }, 100);
-    } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      setElapsedTime(0);
-    }
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isGenerating]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `${secs}s`;
-  };
-
-  const handleGenerate = async () => {
+  const handleGenerate = () => {
     if (!prompt.trim()) {
       toast({
         variant: 'destructive',
@@ -85,108 +49,35 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
       return;
     }
 
-    setIsGenerating(true);
-    setProgress(0);
-
-    // Simulate progress
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev < 30) return prev + Math.random() * 8;
-        if (prev < 70) return prev + Math.random() * 5;
-        if (prev < 90) return prev + Math.random() * 2;
-        return prev;
+    const jobId = createJob();
+    
+    if (jobId) {
+      toast({
+        title: 'Added to queue',
+        description: `${resolution.width}×${resolution.height} • ${numImages} image${numImages > 1 ? 's' : ''}`,
       });
-    }, 600);
-
-    try {
-      const validSlots = referenceSlots
-        .map((slot, index) => ({ slot, index }))
-        .filter((item) => item.slot !== null);
-
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt,
-          width: resolution.width,
-          height: resolution.height,
-          seed: seed === -1 ? undefined : seed,
-          num_images: numImages,
-          mode,
-          reference_images: validSlots.map((item) => ({
-            url: item.slot!.url,
-            priority: item.index,
-          })),
-        }),
-      });
-
-      clearInterval(progressInterval);
-      setProgress(100);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Generation failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.images && data.images.length > 0) {
-        const usedSeed = data.seed || seed;
-        setLastSeed(usedSeed);
-
-        const newResults = data.images.map((url: string, i: number) => ({
-          id: `${Date.now()}-${i}`,
-          url,
-          prompt,
-          width: resolution.width,
-          height: resolution.height,
-          seed: usedSeed,
-          timestamp: Date.now(),
-        }));
-
-        addResults(newResults);
-
-        toast({
-          variant: 'success',
-          title: `Generated ${data.images.length} image${data.images.length > 1 ? 's' : ''}`,
-          description: `${resolution.width}×${resolution.height}`,
-        });
-
-        triggerBalanceRefresh();
-      }
-    } catch (err) {
-      console.error('Generation error:', err);
-      const message = err instanceof Error ? err.message : 'Generation failed';
-      
+    } else {
       toast({
         variant: 'destructive',
-        title: 'Generation failed',
-        description: message,
+        title: 'Queue full',
+        description: `Maximum ${MAX_QUEUED_JOBS} jobs allowed.`,
       });
-    } finally {
-      clearInterval(progressInterval);
-      setIsGenerating(false);
-      setTimeout(() => setProgress(0), 1000);
     }
   };
 
   const handleRegenerate = () => {
-    // Use the last seed for regeneration
-    if (lastSeed !== null) {
-      // Could set the seed in store here if needed
-    }
     handleGenerate();
   };
-
 
   const handleClearAll = () => {
     setPrompt('');
     setShowActions(false);
   };
 
-  const canGenerate = prompt.trim().length > 0 && !isGenerating;
   const hasResults = results.length > 0;
+  const activeCount = activeJobs.length;
   const estimatedCost = numImages * COST_PER_IMAGE;
+  const isQueueActive = activeCount > 0;
 
   return (
     <>
@@ -238,7 +129,6 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
 
           {/* Textarea */}
           <textarea
-            ref={textareaRef}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Describe your image in detail..."
@@ -284,8 +174,8 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
                   : 'bg-[var(--bg-soft)] text-[var(--text-muted)] cursor-not-allowed'
               )}
             >
-              <Sparkles className="w-4 h-4" />
-              Generate
+              {isQueueActive ? <Plus className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+              {isQueueActive ? 'Add to Queue' : 'Generate'}
             </button>
           </div>
         </div>
@@ -306,34 +196,14 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
             'rounded-xl shadow-2xl',
             'animate-scale-in'
           )}>
-              {hasResults && (
-              <button
-                onClick={() => {
-                  // Use last used settings (prompt, resolution, etc)
-                  setShowActions(false);
-                }}
-                className={cn(
-                  'w-full flex items-center gap-3 px-4 py-3.5',
-                  'text-[13px] text-[var(--text-secondary)]',
-                  'hover:bg-[var(--bg-hover)] active:bg-[var(--bg-active)]',
-                  'border-b border-[var(--border-subtle)]',
-                  'rounded-t-xl'
-                )}
-              >
-                <RotateCcw className="w-4 h-4" />
-                Regenerate with Same Seed
-              </button>
-            )}
-            {!hasResults && (
-              <div className="h-0" /> // Ensure first visible item gets rounded corners
-            )}
             <button
               onClick={onHistoryClick}
               className={cn(
                 'w-full flex items-center gap-3 px-4 py-3.5',
                 'text-[13px] text-[var(--text-secondary)]',
                 'hover:bg-[var(--bg-hover)] active:bg-[var(--bg-active)]',
-                'border-b border-[var(--border-subtle)]'
+                'border-b border-[var(--border-subtle)]',
+                'rounded-t-xl'
               )}
             >
               <History className="w-4 h-4" />
@@ -395,7 +265,7 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
 
           {/* Generate Button */}
           <button
-            onClick={hasResults && !isGenerating ? handleRegenerate : handleGenerate}
+            onClick={hasResults && !isQueueActive ? handleRegenerate : handleGenerate}
             disabled={!canGenerate}
             className={cn(
               'relative h-12 px-5 rounded-lg',
@@ -405,29 +275,25 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
               'transition-all duration-150',
               'active:scale-[0.97]',
               'overflow-hidden',
-              // Theme-aware gradients
               canGenerate
-                ? 'dark:bg-gradient-to-b dark:from-[#f0f2f5] dark:via-[#e0e4ea] dark:to-[#c5cad5] dark:text-[#08080c] light:bg-gradient-to-b light:from-[#1a1a1a] light:via-[#2d2d2d] light:to-[#404040] light:text-white shadow-lg'
+                ? 'shadow-lg'
                 : 'bg-[var(--bg-soft)] text-[var(--text-muted)] cursor-not-allowed'
             )}
             style={{
               background: canGenerate 
                 ? 'linear-gradient(180deg, var(--text-primary) 0%, var(--text-secondary) 100%)'
-                : undefined
+                : undefined,
+              color: canGenerate ? 'var(--bg-void)' : undefined
             }}
           >
-            {/* Progress overlay */}
-            {isGenerating && (
-              <div 
-                className="absolute inset-0 bg-gradient-to-r from-[var(--accent-brand)]/20 to-transparent"
-                style={{ width: `${progress}%` }}
-              />
-            )}
-            
-            {isGenerating ? (
+            {isQueueActive ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="font-mono text-[12px]">{formatTime(elapsedTime)}</span>
+                <Plus className="w-4 h-4" />
+                <span>Queue</span>
+                <span className="flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded-full bg-[var(--bg-void)]/20 text-[10px]">
+                  <Layers className="w-3 h-3" />
+                  {activeCount}
+                </span>
               </>
             ) : hasResults ? (
               <>

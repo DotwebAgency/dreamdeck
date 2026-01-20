@@ -7,6 +7,7 @@ import { ReferenceRack } from '@/components/reference-rack/ReferenceRack';
 import { ResultsGrid } from '@/components/results/ResultsGrid';
 import { PinAuth } from '@/components/auth/PinAuth';
 import { MobileLayout } from '@/components/mobile/MobileLayout';
+import { JobQueue } from '@/components/jobs';
 import { useGenerationStore } from '@/store/useGenerationStore';
 import { cn } from '@/lib/utils';
 
@@ -29,7 +30,6 @@ function useIsMobile() {
 
 function DesktopLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isGenerating } = useGenerationStore();
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -73,25 +73,8 @@ function DesktopLayout() {
         </div>
       </main>
 
-      {/* Global generation indicator */}
-      {isGenerating && (
-        <div
-          className={cn(
-            'fixed bottom-6 right-6 z-50',
-            'px-5 py-3 rounded-[var(--radius-lg)]',
-            'bg-[var(--bg-elevated)] glass',
-            'border border-[var(--border-default)]',
-            'shadow-[var(--shadow-xl)]',
-            'flex items-center gap-3',
-            'animate-slide-up'
-          )}
-        >
-          <div className="status-indicator" />
-          <span className="text-[var(--text-sm)] text-[var(--text-primary)]">
-            Generating...
-          </span>
-        </div>
-      )}
+      {/* Job Queue floating panel */}
+      <JobQueue />
     </div>
   );
 }

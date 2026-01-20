@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { devtools } from 'zustand/middleware';
-import type { GeneratedImage, ReferenceImage, GenerationMode } from '@/types';
-import { TOTAL_SLOTS } from '@/lib/constants';
+import type { GeneratedImage, ReferenceImage, GenerationMode, GenerationJob, JobStatus } from '@/types';
+import { TOTAL_SLOTS, DEFAULT_RESOLUTION, MAX_CONCURRENT_JOBS, MAX_QUEUED_JOBS } from '@/lib/constants';
 
 // Utility to generate IDs
-const generateId = () => Math.random().toString(36).substring(2, 15);
+const generateId = () => Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
 
 // === REFERENCE SLOTS TYPE ===
 export type { ReferenceImage };
@@ -15,19 +15,17 @@ interface GenerationState {
   // Reference Slots (10 fixed)
   referenceSlots: (ReferenceImage | null)[];
   
-  // Generation Settings
+  // Generation Settings (defaults for next job)
   prompt: string;
   resolution: { width: number; height: number };
   seed: number;
   numImages: number;
   mode: GenerationMode;
   
-  // UI State
-  isGenerating: boolean;
-  progress: number;
-  error: string | null;
+  // Job Queue System
+  jobs: GenerationJob[];
   
-  // Results
+  // Results (from completed jobs)
   results: GeneratedImage[];
   
   // Settings
@@ -46,10 +44,14 @@ interface GenerationState {
   setNumImages: (num: number) => void;
   setMode: (mode: GenerationMode) => void;
   
-  // Actions - Generation
-  setIsGenerating: (isGenerating: boolean) => void;
-  setProgress: (progress: number) => void;
-  setError: (error: string | null) => void;
+  // Actions - Job Queue
+  createJob: () => string | null;  // Returns job ID or null if queue full
+  updateJobProgress: (jobId: string, progress: number) => void;
+  updateJobStatus: (jobId: string, status: JobStatus, startedAt?: number) => void;
+  completeJob: (jobId: string, results: GeneratedImage[]) => void;
+  failJob: (jobId: string, error: string) => void;
+  removeJob: (jobId: string) => void;
+  clearCompletedJobs: () => void;
   
   // Actions - Results
   addResults: (images: GeneratedImage[]) => void;
@@ -58,6 +60,12 @@ interface GenerationState {
   
   // Actions - Settings
   setAutoSave: (enabled: boolean) => void;
+  
+  // Computed helpers (as functions, not selectors)
+  getActiveJobCount: () => number;
+  getQueuedJobs: () => GenerationJob[];
+  getProcessingJobs: () => GenerationJob[];
+  canQueueJob: () => boolean;
 }
 
 // === INITIAL STATE HELPERS ===
@@ -71,13 +79,11 @@ export const useGenerationStore = create<GenerationState>()(
         // === INITIAL STATE ===
         referenceSlots: createEmptySlots(),
         prompt: '',
-        resolution: { width: 1024, height: 1024 },
+        resolution: DEFAULT_RESOLUTION,  // 9:16 4K by default!
         seed: -1,
         numImages: 1,
         mode: 'std',
-        isGenerating: false,
-        progress: 0,
-        error: null,
+        jobs: [],
         results: [],
         autoSave: false,
 
@@ -134,10 +140,102 @@ export const useGenerationStore = create<GenerationState>()(
         setNumImages: (numImages) => set({ numImages: Math.min(Math.max(1, numImages), 4) }),
         setMode: (mode) => set({ mode }),
 
-        // === GENERATION ACTIONS ===
-        setIsGenerating: (isGenerating) => set({ isGenerating }),
-        setProgress: (progress) => set({ progress }),
-        setError: (error) => set({ error }),
+        // === JOB QUEUE ACTIONS ===
+        createJob: () => {
+          const state = get();
+          
+          // Check if queue is full
+          const totalJobs = state.jobs.filter(j => j.status !== 'completed' && j.status !== 'failed').length;
+          if (totalJobs >= MAX_QUEUED_JOBS) {
+            return null;
+          }
+          
+          // Validate prompt
+          if (!state.prompt.trim()) {
+            return null;
+          }
+          
+          // Snapshot current settings into a new job
+          const jobId = generateId();
+          const newJob: GenerationJob = {
+            id: jobId,
+            status: 'queued',
+            progress: 0,
+            prompt: state.prompt.trim(),
+            resolution: { ...state.resolution },
+            seed: state.seed,
+            numImages: state.numImages,
+            mode: state.mode,
+            referenceImages: state.referenceSlots
+              .map((slot, index) => slot ? { url: slot.url, priority: index } : null)
+              .filter((item): item is { url: string; priority: number } => item !== null),
+            createdAt: Date.now(),
+          };
+          
+          set((state) => ({
+            jobs: [...state.jobs, newJob],
+          }));
+          
+          return jobId;
+        },
+        
+        updateJobProgress: (jobId, progress) => {
+          set((state) => ({
+            jobs: state.jobs.map(job =>
+              job.id === jobId ? { ...job, progress: Math.min(100, Math.max(0, progress)) } : job
+            ),
+          }));
+        },
+        
+        updateJobStatus: (jobId, status, startedAt) => {
+          set((state) => ({
+            jobs: state.jobs.map(job =>
+              job.id === jobId 
+                ? { 
+                    ...job, 
+                    status,
+                    ...(startedAt && { startedAt }),
+                  } 
+                : job
+            ),
+          }));
+        },
+        
+        completeJob: (jobId, results) => {
+          const now = Date.now();
+          set((state) => ({
+            jobs: state.jobs.map(job =>
+              job.id === jobId
+                ? { ...job, status: 'completed' as JobStatus, progress: 100, results, completedAt: now }
+                : job
+            ),
+            // Also add results to the main results array
+            results: [...results, ...state.results],
+          }));
+        },
+        
+        failJob: (jobId, error) => {
+          const now = Date.now();
+          set((state) => ({
+            jobs: state.jobs.map(job =>
+              job.id === jobId
+                ? { ...job, status: 'failed' as JobStatus, error, completedAt: now }
+                : job
+            ),
+          }));
+        },
+        
+        removeJob: (jobId) => {
+          set((state) => ({
+            jobs: state.jobs.filter(job => job.id !== jobId),
+          }));
+        },
+        
+        clearCompletedJobs: () => {
+          set((state) => ({
+            jobs: state.jobs.filter(job => job.status !== 'completed' && job.status !== 'failed'),
+          }));
+        },
 
         // === RESULTS ACTIONS ===
         addResults: (images) => {
@@ -156,6 +254,28 @@ export const useGenerationStore = create<GenerationState>()(
 
         // === SETTINGS ACTIONS ===
         setAutoSave: (autoSave) => set({ autoSave }),
+        
+        // === COMPUTED HELPERS ===
+        getActiveJobCount: () => {
+          const state = get();
+          return state.jobs.filter(j => j.status === 'processing').length;
+        },
+        
+        getQueuedJobs: () => {
+          const state = get();
+          return state.jobs.filter(j => j.status === 'queued');
+        },
+        
+        getProcessingJobs: () => {
+          const state = get();
+          return state.jobs.filter(j => j.status === 'processing');
+        },
+        
+        canQueueJob: () => {
+          const state = get();
+          const activeJobs = state.jobs.filter(j => j.status !== 'completed' && j.status !== 'failed').length;
+          return activeJobs < MAX_QUEUED_JOBS && state.prompt.trim().length > 0;
+        },
       }),
       {
         name: 'dreamdeck-storage',
@@ -168,6 +288,7 @@ export const useGenerationStore = create<GenerationState>()(
           numImages: state.numImages,
           mode: state.mode,
           autoSave: state.autoSave,
+          // Don't persist jobs (they're ephemeral)
         }),
       }
     ),
@@ -179,17 +300,50 @@ export const useGenerationStore = create<GenerationState>()(
 export const useSlots = () => useGenerationStore((state) => state.referenceSlots);
 export const usePrompt = () => useGenerationStore((state) => state.prompt);
 export const useResolution = () => useGenerationStore((state) => state.resolution);
-export const useIsGenerating = () => useGenerationStore((state) => state.isGenerating);
-export const useProgress = () => useGenerationStore((state) => state.progress);
-export const useError = () => useGenerationStore((state) => state.error);
 export const useResults = () => useGenerationStore((state) => state.results);
 export const useAutoSave = () => useGenerationStore((state) => state.autoSave);
+
+// === JOB SELECTORS ===
+export const useJobs = () => useGenerationStore((state) => state.jobs);
+export const useActiveJobs = () => useGenerationStore((state) => 
+  state.jobs.filter(j => j.status === 'processing' || j.status === 'queued')
+);
+export const useProcessingJobs = () => useGenerationStore((state) => 
+  state.jobs.filter(j => j.status === 'processing')
+);
+export const useQueuedJobs = () => useGenerationStore((state) => 
+  state.jobs.filter(j => j.status === 'queued')
+);
+export const useCompletedJobs = () => useGenerationStore((state) => 
+  state.jobs.filter(j => j.status === 'completed')
+);
 
 // === COMPUTED SELECTORS ===
 export const useFilledSlotCount = () => useGenerationStore((state) => 
   state.referenceSlots.filter(slot => slot !== null).length
 );
 
-export const useCanGenerate = () => useGenerationStore((state) => 
-  state.prompt.trim().length > 0 && !state.isGenerating
+export const useCanGenerate = () => useGenerationStore((state) => {
+  const activeJobs = state.jobs.filter(j => j.status !== 'completed' && j.status !== 'failed').length;
+  return state.prompt.trim().length > 0 && activeJobs < MAX_QUEUED_JOBS;
+});
+
+export const useIsAnyJobRunning = () => useGenerationStore((state) =>
+  state.jobs.some(j => j.status === 'processing' || j.status === 'queued')
 );
+
+// Legacy compatibility - returns true if any job is processing
+export const useIsGenerating = () => useGenerationStore((state) =>
+  state.jobs.some(j => j.status === 'processing')
+);
+
+// Legacy compatibility - returns progress of first processing job
+export const useProgress = () => useGenerationStore((state) => {
+  const processingJob = state.jobs.find(j => j.status === 'processing');
+  return processingJob?.progress ?? 0;
+});
+
+export const useError = () => useGenerationStore((state) => {
+  const failedJob = state.jobs.find(j => j.status === 'failed');
+  return failedJob?.error ?? null;
+});

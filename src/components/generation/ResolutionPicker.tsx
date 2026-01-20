@@ -41,7 +41,7 @@ export function ResolutionPicker() {
   const { resolution, setResolution } = useGenerationStore();
   const [locked, setLocked] = useState(true);
   const [manualMode, setManualMode] = useState(false);
-  const [qualityTab, setQualityTab] = useState<'standard' | 'max'>('standard');
+  const [qualityTab, setQualityTab] = useState<'standard' | 'max'>('max'); // Default to 4K!
 
   const standardPresets = RESOLUTION_PRESETS.filter(p => p.category === 'standard');
   const maxPresets = RESOLUTION_PRESETS.filter(p => p.category === 'max');
