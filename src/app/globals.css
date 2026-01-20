@@ -1,0 +1,550 @@
+@import "tailwindcss";
+
+/* ============================================
+   DREAMDECK — SWISS MINIMALIST SaaS UI
+   Clean, Professional, Appropriately Sized
+   ============================================ */
+
+/* === ROOT DESIGN TOKENS === */
+:root {
+  /* === FONTS - DM Sans for clean SaaS feel === */
+  --font-sans: var(--font-sans, 'DM Sans'), 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: var(--font-mono, 'JetBrains Mono'), 'SF Mono', monospace;
+  --font-display: var(--font-sans, 'DM Sans'), sans-serif;
+
+  /* === SPACING SCALE (8px base) === */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* === PROFESSIONAL SAAS TYPOGRAPHY === */
+  /* Standard web sizes - NOT oversized */
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 14px;       /* Standard SaaS base */
+  --text-md: 15px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 24px;
+  --text-4xl: 28px;
+  --text-5xl: 32px;
+
+  /* === TRACKING === */
+  --tracking-tighter: -0.02em;
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.01em;
+  --tracking-wider: 0.025em;
+  --tracking-widest: 0.05em;
+  --tracking-caps: 0.08em;
+
+  /* === LINE HEIGHT === */
+  --leading-none: 1;
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* === RADIUS === */
+  --radius-none: 0;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+
+  /* === TRANSITIONS === */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+}
+
+/* ==========================================
+   DARK MODE — FUTURISTIC COCKPIT
+   ========================================== */
+:root,
+.dark {
+  /* Cockpit depth layers */
+  --bg-void: #020204;
+  --bg-deep: #070709;
+  --bg-mid: #0d0e11;
+  --bg-soft: #141519;
+  --bg-elevated: #1a1b21;
+  --bg-hover: #22232a;
+  --bg-active: #2a2b33;
+  
+  /* Glass overlays */
+  --surface-overlay: rgba(255, 255, 255, 0.015);
+  --surface-highlight: rgba(255, 255, 255, 0.025);
+  --surface-glass: rgba(7, 7, 9, 0.88);
+  
+  /* Text hierarchy - soft, NOT bright white */
+  --text-primary: #E8EAED;
+  --text-secondary: #9BA3AF;
+  --text-muted: #6B7280;
+  --text-subtle: #4B5563;
+  --text-disabled: #374151;
+  
+  /* Borders */
+  --border-default: rgba(255, 255, 255, 0.06);
+  --border-subtle: rgba(255, 255, 255, 0.03);
+  --border-strong: rgba(255, 255, 255, 0.10);
+  --border-focus: rgba(255, 255, 255, 0.18);
+  
+  /* Accents */
+  --accent-primary: #E8EAED;
+  --accent-secondary: #9BA3AF;
+  --accent-brand: #C4C8D0;
+  
+  /* Status */
+  --success: #4ade80;
+  --success-muted: rgba(74, 222, 128, 0.12);
+  --warning: #facc15;
+  --warning-muted: rgba(250, 204, 21, 0.12);
+  --error: #f87171;
+  --error-muted: rgba(248, 113, 113, 0.12);
+  --info: #60a5fa;
+  --info-muted: rgba(96, 165, 250, 0.12);
+  
+  /* FLAT UI — Minimal shadows in dark mode too */
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-2xl: 0 16px 48px rgba(0, 0, 0, 0.7);
+  
+  /* Subtle glows for emphasis only */
+  --glow-sm: none;
+  --glow-md: none;
+  --glow-lg: 0 0 24px rgba(232, 234, 237, 0.05);
+  --glow-brand: 0 0 20px rgba(196, 200, 208, 0.08);
+  
+  /* No insets in flat design */
+  --inset-sm: none;
+  --inset-md: none;
+  --inset-highlight: none;
+  
+  /* No gradients in flat design */
+  --gradient-surface: transparent;
+  --gradient-shimmer: transparent;
+}
+
+/* ==========================================
+   LIGHT MODE
+   ========================================== */
+.light {
+  /* FLAT UI — Pure white surfaces */
+  --bg-void: #FFFFFF;
+  --bg-deep: #FAFAFA;
+  --bg-mid: #F5F5F5;
+  --bg-soft: #EEEEEE;
+  --bg-elevated: #FFFFFF;
+  --bg-hover: #F5F5F5;
+  --bg-active: #EEEEEE;
+  
+  /* No gradients in flat design */
+  --surface-overlay: transparent;
+  --surface-highlight: transparent;
+  --surface-glass: rgba(255, 255, 255, 0.95);
+  
+  /* Soft charcoal text */
+  --text-primary: #1A1A1A;
+  --text-secondary: #4A4A4A;
+  --text-muted: #6B6B6B;
+  --text-subtle: #9A9A9A;
+  --text-disabled: #CCCCCC;
+  
+  /* Clean, minimal borders */
+  --border-default: rgba(0, 0, 0, 0.08);
+  --border-subtle: rgba(0, 0, 0, 0.04);
+  --border-strong: rgba(0, 0, 0, 0.15);
+  --border-focus: rgba(0, 0, 0, 0.25);
+  
+  --accent-primary: #1A1A1A;
+  --accent-secondary: #4A4A4A;
+  --accent-brand: #1F1F1F;
+  
+  /* FLAT — Minimal shadows (only on primary CTAs on hover) */
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.12);
+  
+  /* No glows in light mode flat design */
+  --glow-sm: none;
+  --glow-md: none;
+  --glow-lg: none;
+  --glow-brand: none;
+  
+  /* No insets in flat design */
+  --inset-sm: none;
+  --inset-md: none;
+  --inset-highlight: none;
+  
+  /* No gradients */
+  --gradient-surface: transparent;
+  --gradient-shimmer: transparent;
+}
+
+/* === BASE STYLES === */
+@layer base {
+  * {
+    border-color: var(--border-default);
+  }
+  
+  /* Smooth theme transitions */
+  *,
+  *::before,
+  *::after {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0ms !important;
+    }
+  }
+  
+  *::selection {
+    background: var(--accent-secondary);
+    color: var(--bg-void);
+  }
+  
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+    color-scheme: dark;
+  }
+  
+  .light html,
+  html.light {
+    color-scheme: light;
+  }
+  
+  body {
+    background-color: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);      /* 14px - standard SaaS */
+    font-weight: 400;
+    line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    transition: background-color var(--duration-slow), color var(--duration-slow);
+  }
+
+  /* Headings - Clean, not oversized */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: var(--tracking-tight);
+    line-height: var(--leading-snug);
+    color: var(--text-primary);
+  }
+
+  h1 { font-size: var(--text-3xl); }  /* 24px */
+  h2 { font-size: var(--text-2xl); }  /* 20px */
+  h3 { font-size: var(--text-xl); }   /* 18px */
+  h4 { font-size: var(--text-lg); }   /* 16px */
+
+  p {
+    color: var(--text-secondary);
+    line-height: var(--leading-relaxed);
+  }
+
+  a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color var(--duration-fast);
+  }
+
+  a:hover {
+    color: var(--accent-primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--bg-deep);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: var(--radius-full);
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-subtle);
+  }
+  
+  .light ::-webkit-scrollbar-track {
+    background: var(--bg-mid);
+  }
+  
+  .light ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+  }
+}
+
+/* === COMPONENT UTILITIES === */
+@layer utilities {
+  /* Backgrounds */
+  .bg-app { background-color: var(--bg-void); }
+  .bg-surface { background-color: var(--bg-deep); }
+  .bg-surface-2 { background-color: var(--bg-mid); }
+  .bg-surface-3 { background-color: var(--bg-soft); }
+  .bg-elevated { background-color: var(--bg-elevated); }
+  .bg-hover { background-color: var(--bg-hover); }
+  .bg-active { background-color: var(--bg-active); }
+  
+  /* Glass */
+  .glass {
+    background: var(--surface-glass);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+  }
+  
+  .glass-subtle {
+    background: var(--surface-glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  /* Text */
+  .text-default { color: var(--text-primary); }
+  .text-secondary { color: var(--text-secondary); }
+  .text-muted { color: var(--text-muted); }
+  .text-subtle { color: var(--text-subtle); }
+  
+  /* Borders */
+  .border-default { border-color: var(--border-default); }
+  .border-subtle { border-color: var(--border-subtle); }
+  .border-strong { border-color: var(--border-strong); }
+  
+  /* Safe area */
+  .safe-top { padding-top: env(safe-area-inset-top, 0); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
+  
+  /* Scrollbar hide */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Scrollbar show on hover */
+  .hover\:scrollbar-default:hover {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  .hover\:scrollbar-default:hover::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
+  .hover\:scrollbar-default:hover::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: var(--radius-full);
+  }
+  
+  /* Touch */
+  .touch-response {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+  
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* === ANIMATIONS === */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn var(--duration-normal) var(--ease-out) forwards;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn var(--duration-normal) var(--ease-spring) forwards;
+  }
+  
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  .animate-slide-up {
+    animation: slideUp var(--duration-slow) var(--ease-out) forwards;
+  }
+  
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: var(--glow-sm); }
+    50% { box-shadow: var(--glow-md); }
+  }
+  
+  .animate-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .animate-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-shimmer);
+    animation: shimmer 2s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  
+  .animate-shake {
+    animation: shake 0.4s var(--ease-spring);
+  }
+  
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+  
+  .animate-breathe {
+    animation: breathe 4s ease-in-out infinite;
+  }
+  
+  @keyframes breathe {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.02); }
+  }
+  
+  .stagger-children > * {
+    opacity: 0;
+    animation: fadeIn var(--duration-normal) var(--ease-out) forwards;
+  }
+  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+  .stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+}
+
+/* === COMPONENT STYLES === */
+@layer components {
+  .status-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+    animation: statusPulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes statusPulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--success); }
+    50% { opacity: 0.7; box-shadow: 0 0 12px var(--success); }
+  }
+  
+  .btn-premium {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    color: var(--bg-void);
+    font-weight: 500;
+    letter-spacing: var(--tracking-wide);
+    border-radius: var(--radius-sm);
+    transition: all var(--duration-fast) var(--ease-out);
+    box-shadow: var(--shadow-sm), var(--inset-highlight);
+  }
+  
+  .btn-premium::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  
+  .btn-premium:hover {
+    box-shadow: var(--shadow-md), var(--glow-brand);
+    transform: translateY(-1px);
+  }
+  
+  .btn-premium:active {
+    transform: translateY(0) scale(0.98);
+  }
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* === MOBILE RESPONSIVE === */
+@media (max-width: 768px) {
+  :root {
+    --text-base: 14px;
+    --text-lg: 15px;
+    --text-xl: 16px;
+    --text-2xl: 18px;
+    --text-3xl: 20px;
+  }
+}
