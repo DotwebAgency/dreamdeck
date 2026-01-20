@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { Sparkles, Zap, Plus, Layers, AlertCircle } from 'lucide-react';
-import { useGenerationStore, useCanGenerate, useActiveJobCount, useQueueCapacity } from '@/store/useGenerationStore';
+import { useGenerationStore, useCanGenerate, useActiveJobCount, useQueueCapacityUsed, useQueueCapacityMax } from '@/store/useGenerationStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
@@ -19,10 +19,11 @@ export function GenerateButton() {
   
   const canGenerate = useCanGenerate();
   const activeCount = useActiveJobCount();
-  const queueCapacity = useQueueCapacity();
+  const queueUsed = useQueueCapacityUsed();
+  const queueMax = useQueueCapacityMax();
   const [isAdding, setIsAdding] = useState(false);
   
-  const isQueueFull = queueCapacity.used >= queueCapacity.max;
+  const isQueueFull = queueUsed >= queueMax;
   const hasPrompt = prompt.trim().length > 0;
   
   const handleGenerate = useCallback(() => {
@@ -49,7 +50,7 @@ export function GenerateButton() {
     const jobId = createJob();
     
     if (jobId) {
-      const position = queueCapacity.used + 1;
+      const position = queueUsed + 1;
       toast({
         variant: 'success',
         title: activeCount > 0 ? `Added to queue (#${position})` : 'Generation started',
@@ -58,7 +59,7 @@ export function GenerateButton() {
     }
     
     setTimeout(() => setIsAdding(false), 200);
-  }, [hasPrompt, isQueueFull, createJob, queueCapacity.used, activeCount, resolution, numImages]);
+  }, [hasPrompt, isQueueFull, createJob, queueUsed, activeCount, resolution, numImages]);
 
   const estimatedCost = numImages * COST_PER_IMAGE;
   const is4K = resolution.width >= 4000 || resolution.height >= 4000;
@@ -138,7 +139,7 @@ export function GenerateButton() {
               'tabular-nums',
               isQueueFull && 'text-[var(--warning)]'
             )}>
-              {queueCapacity.used}/{queueCapacity.max} slots
+              {queueUsed}/{queueMax} slots
             </span>
           )}
           <span className="flex items-center gap-1">

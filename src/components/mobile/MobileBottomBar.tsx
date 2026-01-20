@@ -14,7 +14,7 @@ import {
   Layers,
   Send
 } from 'lucide-react';
-import { useGenerationStore, useCanGenerate, useActiveJobCount, useQueueCapacity } from '@/store/useGenerationStore';
+import { useGenerationStore, useCanGenerate, useActiveJobCount, useQueueCapacityUsed, useQueueCapacityMax } from '@/store/useGenerationStore';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
 import { COST_PER_IMAGE, MAX_QUEUED_JOBS } from '@/lib/constants';
@@ -36,14 +36,15 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
 
   const canGenerate = useCanGenerate();
   const activeJobCount = useActiveJobCount();
-  const queueCapacity = useQueueCapacity();
+  const queueUsed = useQueueCapacityUsed();
+  const queueMax = useQueueCapacityMax();
   
   const [isExpanded, setIsExpanded] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  const isQueueFull = queueCapacity.used >= queueCapacity.max;
+  const isQueueFull = queueUsed >= queueMax;
   const hasResults = results.length > 0;
   const activeCount = activeJobCount;
   const estimatedCost = numImages * COST_PER_IMAGE;
@@ -99,7 +100,7 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
     const jobId = createJob();
     
     if (jobId) {
-      const position = queueCapacity.used + 1;
+      const position = queueUsed + 1;
       toast({
         variant: 'success',
         title: activeJobCount > 0 ? `Queued (#${position})` : 'Generating',

@@ -15,7 +15,7 @@ import {
   Zap,
   ImageIcon
 } from 'lucide-react';
-import { useGenerationStore, useJobs, useActiveJobCount, useTotalQueueCost, useQueueCapacity } from '@/store/useGenerationStore';
+import { useGenerationStore, useJobs, useActiveJobCount, useTotalQueueCost, useQueueCapacityUsed, useQueueCapacityMax } from '@/store/useGenerationStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
@@ -396,7 +396,8 @@ export function InlineJobQueue() {
   const jobs = useJobs();
   const activeCount = useActiveJobCount();
   const totalCost = useTotalQueueCost();
-  const queueCapacity = useQueueCapacity();
+  const queueUsed = useQueueCapacityUsed();
+  const queueMax = useQueueCapacityMax();
   const clearCompletedJobs = useGenerationStore((s) => s.clearCompletedJobs);
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -531,7 +532,7 @@ export function InlineJobQueue() {
             </span>
             {activeCount > 0 && (
               <span className="text-[10px] text-white/40 tabular-nums">
-                ~${totalCost.toFixed(3)} • {queueCapacity.used}/{queueCapacity.max} slots
+                ~${totalCost.toFixed(3)} • {queueUsed}/{queueMax} slots
               </span>
             )}
           </div>

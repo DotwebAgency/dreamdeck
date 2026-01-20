@@ -395,12 +395,11 @@ export const useCompletedJobCount = () => useGenerationStore(
 export const useFailedJobCount = () => useGenerationStore(
   (state) => state.jobs.filter(j => j.status === 'failed').length
 );
-export const useQueueCapacity = () => useGenerationStore(
-  (state) => {
-    const active = state.jobs.filter(j => j.status !== 'completed' && j.status !== 'failed').length;
-    return { used: active, max: MAX_QUEUED_JOBS };
-  }
+// Queue capacity selectors - use separate selectors for primitives
+export const useQueueCapacityUsed = () => useGenerationStore(
+  (state) => state.jobs.filter(j => j.status !== 'completed' && j.status !== 'failed').length
 );
+export const useQueueCapacityMax = () => MAX_QUEUED_JOBS;
 export const useTotalQueueCost = () => useGenerationStore(
   (state) => {
     const COST = 0.027;
