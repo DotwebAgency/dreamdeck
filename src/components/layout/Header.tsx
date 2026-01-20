@@ -131,38 +131,23 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
               <Menu className="h-5 w-5" />
             </Button>
 
-            {/* Logo mark - FLAT solid */}
+            {/* Logo mark - Modern gradient with D */}
             <div className="flex items-center gap-3">
               <div
                 className={cn(
                   'w-8 h-8 flex items-center justify-center relative',
-                  'bg-[var(--text-primary)]',
-                  'rounded-lg',
+                  'bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500',
+                  'rounded-xl',
                   'transition-all duration-300',
-                  'hover:bg-[var(--text-secondary)]',
                   'hover:scale-105',
+                  'shadow-lg shadow-fuchsia-500/20',
                   'overflow-hidden'
                 )}
               >
-                {/* Abstract D mark */}
-                <svg 
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  className="text-[var(--bg-void)]"
-                >
-                  <path 
-                    d="M6 4h6c5.523 0 10 4.477 10 10s-4.477 10-10 10H6V4z" 
-                    fill="currentColor"
-                    opacity="0.9"
-                  />
-                  <path 
-                    d="M10 8h2c3.314 0 6 2.686 6 6s-2.686 6-6 6h-2V8z" 
-                    fill="var(--bg-mid)"
-                    opacity="0.5"
-                  />
-                </svg>
+                {/* Modern D letterform */}
+                <span className="text-white font-bold text-[15px] tracking-tight">
+                  D
+                </span>
               </div>
               
               {/* Logo text + status */}

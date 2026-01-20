@@ -50,9 +50,11 @@ export function FullscreenViewer({
   const transformRef = useRef<ReactZoomPanPinchRef>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Touch swipe state
+  // Touch swipe state - improved for better mobile UX
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwipeActive, setIsSwipeActive] = useState(false);
+  const swipeLockedRef = useRef(false);
 
   const hasPrev = images.length > 1 && currentIndex > 0;
   const hasNext = images.length > 1 && currentIndex < images.length - 1;
@@ -136,10 +138,10 @@ export function FullscreenViewer({
     };
   }, [isOpen]);
   
-  // Touch swipe handlers for mobile navigation
+  // Touch swipe handlers for mobile navigation - improved with gesture locking
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     // Only handle single touch and when not zoomed
-    if (e.touches.length !== 1 || scale > 1.1) return;
+    if (e.touches.length !== 1 || scale > 1.05) return;
     
     const touch = e.touches[0];
     touchStartRef.current = {
@@ -147,40 +149,69 @@ export function FullscreenViewer({
       y: touch.clientY,
       time: Date.now(),
     };
+    swipeLockedRef.current = false;
     setSwipeOffset(0);
+    setIsSwipeActive(false);
   }, [scale]);
   
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!touchStartRef.current || e.touches.length !== 1 || scale > 1.1) return;
+    if (!touchStartRef.current || e.touches.length !== 1 || scale > 1.05) return;
     
     const touch = e.touches[0];
     const deltaX = touch.clientX - touchStartRef.current.x;
-    const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    const absDeltaX = Math.abs(deltaX);
+    const absDeltaY = Math.abs(deltaY);
     
-    // Only track horizontal swipes
-    if (deltaY > 50) {
-      touchStartRef.current = null;
-      setSwipeOffset(0);
-      return;
+    // Lock direction after initial movement (10px threshold)
+    if (!swipeLockedRef.current && (absDeltaX > 10 || absDeltaY > 10)) {
+      // Lock to horizontal if primarily horizontal movement
+      if (absDeltaX > absDeltaY * 1.5) {
+        swipeLockedRef.current = true;
+        setIsSwipeActive(true);
+      } else {
+        // Vertical scroll - cancel swipe
+        touchStartRef.current = null;
+        setSwipeOffset(0);
+        setIsSwipeActive(false);
+        return;
+      }
     }
+    
+    if (!swipeLockedRef.current) return;
+    
+    // Prevent default to stop TransformWrapper from panning
+    e.preventDefault();
+    e.stopPropagation();
     
     // Limit swipe range and add resistance at edges
     let offset = deltaX;
+    const maxSwipe = window.innerWidth * 0.5;
+    
     if ((deltaX > 0 && !hasPrev) || (deltaX < 0 && !hasNext)) {
-      offset = deltaX * 0.3; // Add resistance when at edge
+      offset = deltaX * 0.2; // Strong resistance when at edge
     }
+    
+    // Clamp offset
+    offset = Math.max(-maxSwipe, Math.min(maxSwipe, offset));
     
     setSwipeOffset(offset);
   }, [scale, hasPrev, hasNext]);
   
   const handleTouchEnd = useCallback(() => {
-    if (!touchStartRef.current) return;
+    if (!touchStartRef.current || !swipeLockedRef.current) {
+      touchStartRef.current = null;
+      setSwipeOffset(0);
+      setIsSwipeActive(false);
+      return;
+    }
     
-    const threshold = 80; // Minimum swipe distance
-    const velocity = Math.abs(swipeOffset) / (Date.now() - touchStartRef.current.time);
+    const threshold = 50; // Minimum swipe distance
+    const elapsed = Date.now() - touchStartRef.current.time;
+    const velocity = Math.abs(swipeOffset) / elapsed;
     
-    // Fast swipe or long enough swipe
-    if (Math.abs(swipeOffset) > threshold || velocity > 0.5) {
+    // Fast swipe (velocity > 0.3px/ms) or long enough swipe
+    if (Math.abs(swipeOffset) > threshold || (velocity > 0.3 && Math.abs(swipeOffset) > 20)) {
       if (swipeOffset > 0 && hasPrev) {
         onNavigate?.('prev');
       } else if (swipeOffset < 0 && hasNext) {
@@ -189,7 +220,9 @@ export function FullscreenViewer({
     }
     
     touchStartRef.current = null;
+    swipeLockedRef.current = false;
     setSwipeOffset(0);
+    setIsSwipeActive(false);
   }, [swipeOffset, hasPrev, hasNext, onNavigate]);
 
   const handleDownload = useCallback(async () => {
@@ -448,7 +481,8 @@ export function FullscreenViewer({
         onTouchEnd={handleTouchEnd}
         style={{
           transform: swipeOffset !== 0 ? `translateX(${swipeOffset}px)` : undefined,
-          transition: swipeOffset === 0 ? 'transform 0.3s ease-out' : undefined,
+          transition: !isSwipeActive ? 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+          opacity: 1 - Math.abs(swipeOffset) / window.innerWidth * 0.3,
         }}
       >
         <TransformWrapper
@@ -460,7 +494,10 @@ export function FullscreenViewer({
           wheel={{ step: 0.05, smoothStep: 0.005 }}
           pinch={{ step: 5 }}
           doubleClick={{ mode: 'toggle', step: 2 }}
-          panning={{ velocityDisabled: false }}
+          panning={{ 
+            disabled: isSwipeActive || scale <= 1.05,
+            velocityDisabled: false 
+          }}
           onTransformed={handleScaleChange}
         >
           <TransformComponent

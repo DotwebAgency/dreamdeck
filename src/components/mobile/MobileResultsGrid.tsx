@@ -1,15 +1,33 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useGenerationStore } from '@/store/useGenerationStore';
 import { MobileImageCard } from './MobileImageCard';
 import { MobileViewer } from './MobileViewer';
-import { Sparkles, Wand2, Settings2, ImagePlus } from 'lucide-react';
+import { Sparkles, Wand2, Settings2, ImagePlus, Grid2X2, Grid3X3, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Local storage key for grid columns preference
+const GRID_COLS_KEY = 'dreamdeck-grid-cols';
 
 export function MobileResultsGrid() {
   const { results, removeResult } = useGenerationStore();
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const [gridCols, setGridCols] = useState(2);
+
+  // Load saved grid preference
+  useEffect(() => {
+    const saved = localStorage.getItem(GRID_COLS_KEY);
+    if (saved) {
+      setGridCols(parseInt(saved, 10));
+    }
+  }, []);
+
+  // Save grid preference
+  const handleGridColsChange = useCallback((cols: number) => {
+    setGridCols(cols);
+    localStorage.setItem(GRID_COLS_KEY, cols.toString());
+  }, []);
 
   const handleOpenViewer = useCallback((index: number) => {
     setViewerIndex(index);
@@ -111,21 +129,72 @@ export function MobileResultsGrid() {
   return (
     <>
       <div className="p-3">
-        {/* Header */}
+        {/* Header with grid toggle */}
         <div className="flex items-center justify-between mb-3 px-1">
           <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)] font-medium">
             {results.length} {results.length === 1 ? 'image' : 'images'}
           </span>
+          
+          {/* Grid columns selector */}
+          <div className="flex items-center gap-0.5 p-0.5 bg-[var(--bg-mid)] rounded-lg">
+            <button
+              onClick={() => handleGridColsChange(1)}
+              className={cn(
+                'w-7 h-7 rounded-md flex items-center justify-center',
+                'transition-all duration-150',
+                gridCols === 1 
+                  ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] shadow-sm' 
+                  : 'text-[var(--text-muted)]'
+              )}
+              title="1 per row"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => handleGridColsChange(2)}
+              className={cn(
+                'w-7 h-7 rounded-md flex items-center justify-center',
+                'transition-all duration-150',
+                gridCols === 2 
+                  ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] shadow-sm' 
+                  : 'text-[var(--text-muted)]'
+              )}
+              title="2 per row"
+            >
+              <Grid2X2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => handleGridColsChange(3)}
+              className={cn(
+                'w-7 h-7 rounded-md flex items-center justify-center',
+                'transition-all duration-150',
+                gridCols === 3 
+                  ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] shadow-sm' 
+                  : 'text-[var(--text-muted)]'
+              )}
+              title="3 per row"
+            >
+              <Grid3X3 className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
-        {/* 2-column grid */}
-        <div className="grid grid-cols-2 gap-2">
+        {/* Dynamic grid based on user preference */}
+        <div 
+          className={cn(
+            'grid gap-2',
+            gridCols === 1 && 'grid-cols-1',
+            gridCols === 2 && 'grid-cols-2',
+            gridCols === 3 && 'grid-cols-3'
+          )}
+        >
           {results.map((image, index) => (
             <MobileImageCard
               key={image.id}
               image={image}
               onTap={() => handleOpenViewer(index)}
               onDelete={() => removeResult(image.id)}
+              compact={gridCols === 3}
             />
           ))}
         </div>

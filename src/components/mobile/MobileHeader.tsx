@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Sparkles, Wallet } from 'lucide-react';
+import { Wand2, Wallet, ChevronRight } from 'lucide-react';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { UsageModal } from '@/components/layout/UsageModal';
 import { cn } from '@/lib/utils';
 import { EVENTS } from '@/lib/events';
 
@@ -13,6 +14,7 @@ interface MobileHeaderProps {
 export function MobileHeader({ onSettingsClick }: MobileHeaderProps) {
   const [balance, setBalance] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showUsageModal, setShowUsageModal] = useState(false);
 
   const fetchBalance = useCallback(async () => {
     try {
@@ -53,30 +55,33 @@ export function MobileHeader({ onSettingsClick }: MobileHeaderProps) {
         <div 
           className={cn(
             'w-8 h-8 flex items-center justify-center',
-            'bg-gradient-to-br from-[var(--text-primary)] to-[var(--text-secondary)]',
-            'rounded-[var(--radius-sm)]',
-            'shadow-[var(--shadow-sm)]'
+            'bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500',
+            'rounded-xl',
+            'shadow-lg shadow-fuchsia-500/20'
           )}
         >
-          <Sparkles className="w-4 h-4 text-[var(--bg-void)]" />
+          {/* Modern D letterform */}
+          <span className="text-white font-bold text-[15px] tracking-tight">
+            D
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[12px] font-medium tracking-[0.05em] text-[var(--text-primary)]">
             DREAMDECK
           </span>
-          <span className="status-indicator" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
         </div>
       </div>
 
       {/* Right side */}
       <div className="flex items-center gap-2">
-        {/* Balance */}
+        {/* Balance - Opens Usage Modal */}
         <button
-          onClick={fetchBalance}
+          onClick={() => setShowUsageModal(true)}
           className={cn(
             'flex items-center gap-2 px-3 h-9',
             'bg-[var(--bg-deep)]',
-            'rounded-[var(--radius-sm)]',
+            'rounded-lg',
             'border border-[var(--border-default)]',
             'shadow-[var(--inset-sm)]',
             'transition-all duration-150',
@@ -97,11 +102,19 @@ export function MobileHeader({ onSettingsClick }: MobileHeaderProps) {
           ) : (
             <span className="text-[12px] text-[var(--text-subtle)]">—</span>
           )}
+          <ChevronRight className="w-3 h-3 text-[var(--text-subtle)]" />
         </button>
 
         {/* Theme toggle */}
         <ThemeToggle />
       </div>
+      
+      {/* Usage Modal */}
+      <UsageModal 
+        isOpen={showUsageModal}
+        onClose={() => setShowUsageModal(false)}
+        balance={balance}
+      />
     </header>
   );
 }

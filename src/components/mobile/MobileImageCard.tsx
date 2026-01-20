@@ -11,9 +11,10 @@ interface MobileImageCardProps {
   image: GeneratedImage;
   onTap: () => void;
   onDelete: () => void;
+  compact?: boolean;
 }
 
-export function MobileImageCard({ image, onTap, onDelete }: MobileImageCardProps) {
+export function MobileImageCard({ image, onTap, onDelete, compact = false }: MobileImageCardProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showActions, setShowActions] = useState(false);
 
@@ -64,8 +65,8 @@ export function MobileImageCard({ image, onTap, onDelete }: MobileImageCardProps
         loading="lazy"
       />
 
-      {/* Seed badge */}
-      {image.seed && (
+      {/* Seed badge - hidden in compact mode */}
+      {image.seed && !compact && (
         <div className={cn(
           'absolute bottom-1.5 right-1.5',
           'px-1.5 py-0.5 rounded',
@@ -82,29 +83,32 @@ export function MobileImageCard({ image, onTap, onDelete }: MobileImageCardProps
           className={cn(
             'absolute inset-0',
             'bg-black/80 backdrop-blur-sm',
-            'flex items-center justify-center gap-4'
+            'flex items-center justify-center',
+            compact ? 'gap-2' : 'gap-4'
           )}
         >
           <button
             onClick={handleDownload}
             disabled={isDownloading}
             className={cn(
-              'w-12 h-12 rounded-full',
+              'rounded-full',
               'bg-white/20 flex items-center justify-center',
-              'active:scale-95'
+              'active:scale-95',
+              compact ? 'w-9 h-9' : 'w-12 h-12'
             )}
           >
-            <Download className={cn('w-5 h-5 text-white', isDownloading && 'animate-pulse')} />
+            <Download className={cn(compact ? 'w-4 h-4' : 'w-5 h-5', 'text-white', isDownloading && 'animate-pulse')} />
           </button>
           <button
             onClick={handleDelete}
             className={cn(
-              'w-12 h-12 rounded-full',
+              'rounded-full',
               'bg-red-500/30 flex items-center justify-center',
-              'active:scale-95'
+              'active:scale-95',
+              compact ? 'w-9 h-9' : 'w-12 h-12'
             )}
           >
-            <Trash2 className="w-5 h-5 text-red-400" />
+            <Trash2 className={cn(compact ? 'w-4 h-4' : 'w-5 h-5', 'text-red-400')} />
           </button>
         </div>
       )}

@@ -31,7 +31,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed top-[84px] bottom-0 left-0 z-40', // 56px header + 28px banner
+          'fixed top-14 bottom-0 left-0 z-40',
           'w-[320px]',
           'bg-[var(--bg-deep)]',
           'border-r border-[var(--border-default)]',
