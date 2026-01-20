@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Sparkles, Wallet, Menu, RefreshCw, ChevronRight } from 'lucide-react';
+import { Wallet, Menu, RefreshCw, ChevronRight } from 'lucide-react';
+import { DiamondsFour } from '@phosphor-icons/react';
 import { ThemeToggle } from './ThemeToggle';
 import { UsageModal } from './UsageModal';
 import { Button } from '@/components/ui/button';
@@ -131,23 +132,23 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
               <Menu className="h-5 w-5" />
             </Button>
 
-            {/* Logo mark - Slate monochrome D */}
+            {/* Logo mark - Professional slate icon */}
             <div className="flex items-center gap-3">
               <div
                 className={cn(
                   'w-8 h-8 flex items-center justify-center relative',
-                  'bg-neutral-800',
+                  'bg-neutral-900',
                   'rounded-xl',
                   'transition-all duration-300',
                   'hover:scale-105',
-                  'border border-neutral-700',
+                  'border border-neutral-800',
                   'overflow-hidden'
                 )}
               >
-                {/* Modern D letterform */}
-                <span className="text-neutral-200 font-bold text-[15px] tracking-tight">
-                  D
-                </span>
+                <DiamondsFour 
+                  weight="fill" 
+                  className="w-5 h-5 text-neutral-300" 
+                />
               </div>
               
               {/* Logo text + status */}

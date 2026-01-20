@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Wand2, Wallet, ChevronRight } from 'lucide-react';
+import { Wallet, ChevronRight } from 'lucide-react';
+import { DiamondsFour } from '@phosphor-icons/react';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { UsageModal } from '@/components/layout/UsageModal';
 import { cn } from '@/lib/utils';
@@ -50,20 +51,20 @@ export function MobileHeader({ onSettingsClick }: MobileHeaderProps) {
         'safe-top'
       )}
     >
-      {/* Logo - Slate monochrome */}
+      {/* Logo - Professional slate icon */}
       <div className="flex items-center gap-2.5">
         <div 
           className={cn(
             'w-8 h-8 flex items-center justify-center',
-            'bg-neutral-800',
+            'bg-neutral-900',
             'rounded-xl',
-            'border border-neutral-700'
+            'border border-neutral-800'
           )}
         >
-          {/* Modern D letterform */}
-          <span className="text-neutral-200 font-bold text-[15px] tracking-tight">
-            D
-          </span>
+          <DiamondsFour 
+            weight="fill" 
+            className="w-5 h-5 text-neutral-300" 
+          />
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[12px] font-medium tracking-[0.05em] text-[var(--text-primary)]">
