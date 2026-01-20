@@ -8,13 +8,17 @@ import { MobileReferenceRack } from './MobileReferenceRack';
 import { MobileResultsGrid } from './MobileResultsGrid';
 import { MobileSettingsSheet } from './MobileSettingsSheet';
 import { MobileBottomBar } from './MobileBottomBar';
-import { JobQueue } from '@/components/jobs';
+import { InlineJobQueue } from '@/components/jobs';
+import { useJobProcessor } from '@/hooks/useJobProcessor';
 import { cn } from '@/lib/utils';
 
 export function MobileLayout() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const isAnyJobRunning = useIsAnyJobRunning();
+  
+  // Process jobs from queue
+  useJobProcessor();
 
   const openSettings = useCallback(() => setSettingsOpen(true), []);
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
@@ -33,6 +37,9 @@ export function MobileLayout() {
 
         {/* Quick Settings (visual aspect ratio cards) */}
         <MobileQuickSettings onExpandSettings={openSettings} />
+        
+        {/* Inline Job Queue - integrated into the UI */}
+        <InlineJobQueue />
 
         {/* Results Grid */}
         <div className="flex-1 overflow-y-auto">
@@ -51,9 +58,6 @@ export function MobileLayout() {
         isOpen={settingsOpen} 
         onClose={closeSettings} 
       />
-
-      {/* Job Queue - shows on all screen sizes */}
-      <JobQueue />
 
       {/* Generation progress indicator - subtle version for mobile */}
       {isAnyJobRunning && (

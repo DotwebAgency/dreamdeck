@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { ReferenceRack } from '@/components/reference-rack/ReferenceRack';
 import { ResultsGrid } from '@/components/results/ResultsGrid';
 import { PinAuth } from '@/components/auth/PinAuth';
 import { MobileLayout } from '@/components/mobile/MobileLayout';
-import { JobQueue } from '@/components/jobs';
-import { useGenerationStore } from '@/store/useGenerationStore';
+import { InlineJobQueue } from '@/components/jobs';
+import { useJobProcessor } from '@/hooks/useJobProcessor';
 import { cn } from '@/lib/utils';
 
 // Hook to detect mobile viewport
@@ -30,6 +30,9 @@ function useIsMobile() {
 
 function DesktopLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Process jobs from queue
+  useJobProcessor();
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -67,14 +70,14 @@ function DesktopLayout() {
         )}
       >
         <ReferenceRack />
+        
+        {/* Inline Job Queue - integrated into the UI */}
+        <InlineJobQueue />
 
         <div className="flex-1">
           <ResultsGrid />
         </div>
       </main>
-
-      {/* Job Queue floating panel */}
-      <JobQueue />
     </div>
   );
 }
