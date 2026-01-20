@@ -3,63 +3,41 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { 
   Layers, 
-  X, 
   Trash2,
   ChevronDown,
   ChevronUp,
   Loader2
 } from 'lucide-react';
-import { useGenerationStore, useJobs, useActiveJobs } from '@/store/useGenerationStore';
+import { useGenerationStore } from '@/store/useGenerationStore';
 import { JobCard } from './JobCard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
-import { MAX_CONCURRENT_JOBS, COST_PER_IMAGE } from '@/lib/constants';
+import { MAX_CONCURRENT_JOBS } from '@/lib/constants';
 import { triggerBalanceRefresh } from '@/lib/events';
-import type { GeneratedImage } from '@/types';
+import type { GeneratedImage, GenerationJob } from '@/types';
 
 export function JobQueue() {
-  const jobs = useJobs();
-  const activeJobs = useActiveJobs();
-  const { 
-    updateJobProgress, 
-    updateJobStatus, 
-    completeJob, 
-    failJob,
-    clearCompletedJobs,
-  } = useGenerationStore();
+  const jobs = useGenerationStore((state) => state.jobs);
+  const updateJobProgress = useGenerationStore((state) => state.updateJobProgress);
+  const updateJobStatus = useGenerationStore((state) => state.updateJobStatus);
+  const completeJob = useGenerationStore((state) => state.completeJob);
+  const failJob = useGenerationStore((state) => state.failJob);
+  const clearCompletedJobs = useGenerationStore((state) => state.clearCompletedJobs);
   
   const [isExpanded, setIsExpanded] = useState(true);
   const processingRef = useRef<Set<string>>(new Set());
-  
-  // Process queued jobs
-  useEffect(() => {
-    const queuedJobs = jobs.filter(j => j.status === 'queued');
-    const processingJobs = jobs.filter(j => j.status === 'processing');
-    
-    // Check if we can start more jobs
-    if (processingJobs.length >= MAX_CONCURRENT_JOBS) return;
-    if (queuedJobs.length === 0) return;
-    
-    // Start the next queued job
-    const nextJob = queuedJobs[0];
-    if (processingRef.current.has(nextJob.id)) return;
-    
-    processingRef.current.add(nextJob.id);
-    processJob(nextJob.id);
-  }, [jobs]);
+  const isProcessingRef = useRef(false);
   
   // Process a single job
-  const processJob = useCallback(async (jobId: string) => {
-    const job = jobs.find(j => j.id === jobId);
-    if (!job) return;
+  const processJob = useCallback(async (job: GenerationJob) => {
+    const jobId = job.id;
     
     // Start processing
     updateJobStatus(jobId, 'processing', Date.now());
     
     // Simulate progress
     const is4K = job.resolution.width >= 4000 || job.resolution.height >= 4000;
-    const baseTime = is4K ? 25000 : 15000;
     let progress = 0;
     
     const progressInterval = setInterval(() => {
@@ -128,7 +106,44 @@ export function JobQueue() {
     } finally {
       processingRef.current.delete(jobId);
     }
-  }, [jobs, updateJobProgress, updateJobStatus, completeJob, failJob]);
+  }, [updateJobProgress, updateJobStatus, completeJob, failJob]);
+  
+  // Process queued jobs - separate effect with debounce
+  useEffect(() => {
+    // Prevent concurrent execution of this effect
+    if (isProcessingRef.current) return;
+    
+    const queuedJobs = jobs.filter(j => j.status === 'queued');
+    const processingJobs = jobs.filter(j => j.status === 'processing');
+    
+    // Check if we can start more jobs
+    if (processingJobs.length >= MAX_CONCURRENT_JOBS) return;
+    if (queuedJobs.length === 0) return;
+    
+    // Find jobs we haven't started yet
+    const jobsToStart = queuedJobs.filter(j => !processingRef.current.has(j.id));
+    if (jobsToStart.length === 0) return;
+    
+    // How many slots available?
+    const slotsAvailable = MAX_CONCURRENT_JOBS - processingJobs.length;
+    const jobsToProcess = jobsToStart.slice(0, slotsAvailable);
+    
+    if (jobsToProcess.length === 0) return;
+    
+    isProcessingRef.current = true;
+    
+    // Start jobs
+    jobsToProcess.forEach(job => {
+      processingRef.current.add(job.id);
+      processJob(job);
+    });
+    
+    // Reset flag after a short delay
+    setTimeout(() => {
+      isProcessingRef.current = false;
+    }, 100);
+    
+  }, [jobs, processJob]);
   
   // Count by status
   const processingCount = jobs.filter(j => j.status === 'processing').length;
