@@ -297,6 +297,7 @@ export const useGenerationStore = create<GenerationState>()(
 );
 
 // === SELECTORS ===
+// Direct state selectors (primitive values / stable references)
 export const useSlots = () => useGenerationStore((state) => state.referenceSlots);
 export const usePrompt = () => useGenerationStore((state) => state.prompt);
 export const useResolution = () => useGenerationStore((state) => state.resolution);
@@ -304,21 +305,26 @@ export const useResults = () => useGenerationStore((state) => state.results);
 export const useAutoSave = () => useGenerationStore((state) => state.autoSave);
 
 // === JOB SELECTORS ===
+// Use the raw jobs array (stable reference from store)
 export const useJobs = () => useGenerationStore((state) => state.jobs);
-export const useActiveJobs = () => useGenerationStore((state) => 
-  state.jobs.filter(j => j.status === 'processing' || j.status === 'queued')
+
+// Derived array selectors - these return new arrays but that's ok for display purposes
+// The infinite loop was fixed in JobQueue by using getState() outside the component
+export const useActiveJobs = () => useGenerationStore(
+  (state) => state.jobs.filter(j => j.status === 'processing' || j.status === 'queued')
 );
-export const useProcessingJobs = () => useGenerationStore((state) => 
-  state.jobs.filter(j => j.status === 'processing')
+export const useProcessingJobs = () => useGenerationStore(
+  (state) => state.jobs.filter(j => j.status === 'processing')
 );
-export const useQueuedJobs = () => useGenerationStore((state) => 
-  state.jobs.filter(j => j.status === 'queued')
+export const useQueuedJobs = () => useGenerationStore(
+  (state) => state.jobs.filter(j => j.status === 'queued')
 );
-export const useCompletedJobs = () => useGenerationStore((state) => 
-  state.jobs.filter(j => j.status === 'completed')
+export const useCompletedJobs = () => useGenerationStore(
+  (state) => state.jobs.filter(j => j.status === 'completed')
 );
 
 // === COMPUTED SELECTORS ===
+// Primitive returns (number/boolean) are stable by default
 export const useFilledSlotCount = () => useGenerationStore((state) => 
   state.referenceSlots.filter(slot => slot !== null).length
 );
@@ -328,6 +334,7 @@ export const useCanGenerate = () => useGenerationStore((state) => {
   return state.prompt.trim().length > 0 && activeJobs < MAX_QUEUED_JOBS;
 });
 
+// Boolean selectors are stable
 export const useIsAnyJobRunning = () => useGenerationStore((state) =>
   state.jobs.some(j => j.status === 'processing' || j.status === 'queued')
 );
