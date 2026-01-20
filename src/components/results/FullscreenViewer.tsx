@@ -55,9 +55,32 @@ export function FullscreenViewer({
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isSwipeActive, setIsSwipeActive] = useState(false);
   const swipeLockedRef = useRef(false);
+  
+  // Crossfade animation state
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionDirection, setTransitionDirection] = useState<'left' | 'right' | null>(null);
+  const prevIndexRef = useRef(currentIndex);
 
   const hasPrev = images.length > 1 && currentIndex > 0;
   const hasNext = images.length > 1 && currentIndex < images.length - 1;
+
+  // Handle crossfade transition on image change
+  useEffect(() => {
+    if (prevIndexRef.current !== currentIndex) {
+      const direction = currentIndex > prevIndexRef.current ? 'left' : 'right';
+      setTransitionDirection(direction);
+      setIsTransitioning(true);
+      
+      // Reset transition after animation
+      const timer = setTimeout(() => {
+        setIsTransitioning(false);
+        setTransitionDirection(null);
+      }, 300);
+      
+      prevIndexRef.current = currentIndex;
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex]);
 
   // Auto-hide controls
   const resetControlsTimeout = useCallback(() => {
@@ -516,7 +539,12 @@ export function FullscreenViewer({
             <img
               src={image.url}
               alt={image.prompt}
-              className="max-w-full max-h-full object-contain select-none pointer-events-none"
+              className={cn(
+                'max-w-full max-h-full object-contain select-none pointer-events-none',
+                'transition-all duration-300 ease-out',
+                isTransitioning && transitionDirection === 'left' && 'animate-[slideInRight_0.3s_ease-out]',
+                isTransitioning && transitionDirection === 'right' && 'animate-[slideInLeft_0.3s_ease-out]'
+              )}
               draggable={false}
               style={{
                 maxWidth: '95vw',

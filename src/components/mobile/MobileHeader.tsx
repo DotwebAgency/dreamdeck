@@ -50,18 +50,18 @@ export function MobileHeader({ onSettingsClick }: MobileHeaderProps) {
         'safe-top'
       )}
     >
-      {/* Logo */}
+      {/* Logo - Slate monochrome */}
       <div className="flex items-center gap-2.5">
         <div 
           className={cn(
             'w-8 h-8 flex items-center justify-center',
-            'bg-gradient-to-br from-zinc-600 via-zinc-500 to-zinc-400',
+            'bg-neutral-800',
             'rounded-xl',
-            'shadow-lg shadow-black/40'
+            'border border-neutral-700'
           )}
         >
           {/* Modern D letterform */}
-          <span className="text-white font-bold text-[15px] tracking-tight">
+          <span className="text-neutral-200 font-bold text-[15px] tracking-tight">
             D
           </span>
         </div>

@@ -131,21 +131,21 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
               <Menu className="h-5 w-5" />
             </Button>
 
-            {/* Logo mark - Modern gradient with D */}
+            {/* Logo mark - Slate monochrome D */}
             <div className="flex items-center gap-3">
               <div
                 className={cn(
                   'w-8 h-8 flex items-center justify-center relative',
-                  'bg-gradient-to-br from-zinc-600 via-zinc-500 to-zinc-400',
+                  'bg-neutral-800',
                   'rounded-xl',
                   'transition-all duration-300',
                   'hover:scale-105',
-                  'shadow-lg shadow-black/40',
+                  'border border-neutral-700',
                   'overflow-hidden'
                 )}
               >
                 {/* Modern D letterform */}
-                <span className="text-white font-bold text-[15px] tracking-tight">
+                <span className="text-neutral-200 font-bold text-[15px] tracking-tight">
                   D
                 </span>
               </div>

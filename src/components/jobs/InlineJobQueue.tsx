@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
+import React from 'react';
 import { 
   ChevronUp, 
   ChevronDown, 
@@ -13,7 +14,9 @@ import {
   Trash2,
   RotateCcw,
   Zap,
-  ImageIcon
+  ImageIcon,
+  Copy,
+  Check
 } from 'lucide-react';
 import { useGenerationStore, useJobs, useActiveJobCount, useTotalQueueCost, useQueueCapacityUsed, useQueueCapacityMax } from '@/store/useGenerationStore';
 import { Button } from '@/components/ui/button';
@@ -39,6 +42,19 @@ const CompactJobCard = memo(function CompactJobCard({
   const retryJob = useGenerationStore((s) => s.retryJob);
   const cancelJob = useGenerationStore((s) => s.cancelJob);
   const [elapsed, setElapsed] = useState(0);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  
+  const handleCopyPrompt = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!job.prompt) return;
+    await navigator.clipboard.writeText(job.prompt);
+    setCopiedPrompt(true);
+    toast({
+      title: 'Prompt copied',
+      description: 'Ready to paste',
+    });
+    setTimeout(() => setCopiedPrompt(false), 2000);
+  }, [job.prompt]);
   
   // Timer for processing jobs
   useEffect(() => {
@@ -162,15 +178,38 @@ const CompactJobCard = memo(function CompactJobCard({
           )}
         </div>
         
-        {/* Prompt preview */}
-        <p className={cn(
-          'text-[12px] leading-relaxed',
-          'text-white/70',
-          'line-clamp-2 mb-3',
-          'min-h-[2.5em]'
-        )}>
-          {job.prompt || 'No prompt...'}
-        </p>
+        {/* Prompt preview with copy button */}
+        <div className="relative group/prompt mb-3">
+          <p className={cn(
+            'text-[12px] leading-relaxed',
+            'text-white/70',
+            'line-clamp-2',
+            'min-h-[2.5em]',
+            'pr-6' // Space for copy button
+          )}>
+            {job.prompt || 'No prompt...'}
+          </p>
+          {job.prompt && (
+            <button
+              onClick={handleCopyPrompt}
+              className={cn(
+                'absolute top-0 right-0',
+                'p-1 rounded',
+                'text-white/30 hover:text-white/70',
+                'hover:bg-white/10',
+                'opacity-0 group-hover/prompt:opacity-100',
+                'transition-all duration-150'
+              )}
+              title="Copy prompt"
+            >
+              {copiedPrompt ? (
+                <Check className="w-3 h-3 text-neutral-300" />
+              ) : (
+                <Copy className="w-3 h-3" />
+              )}
+            </button>
+          )}
+        </div>
         
         {/* Progress bar for processing */}
         {job.status === 'processing' && (
@@ -289,6 +328,15 @@ const MobileJobCard = memo(function MobileJobCard({
   const removeJob = useGenerationStore((s) => s.removeJob);
   const retryJob = useGenerationStore((s) => s.retryJob);
   const cancelJob = useGenerationStore((s) => s.cancelJob);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+
+  const handleCopyPrompt = useCallback(async () => {
+    if (!job.prompt) return;
+    await navigator.clipboard.writeText(job.prompt);
+    setCopiedPrompt(true);
+    toast({ title: 'Copied!' });
+    setTimeout(() => setCopiedPrompt(false), 1500);
+  }, [job.prompt]);
 
   // Status configurations - using slate palette
   const statusConfig = {
@@ -333,10 +381,22 @@ const MobileJobCard = memo(function MobileJobCard({
         )}
       </div>
       
-      {/* Prompt - single line */}
-      <p className="text-[10px] text-white/60 line-clamp-1 mb-2">
-        {job.prompt}
-      </p>
+      {/* Prompt - single line with tap to copy */}
+      <button 
+        onClick={handleCopyPrompt}
+        className="text-left w-full mb-2 active:opacity-70"
+      >
+        <p className="text-[10px] text-white/60 line-clamp-1 flex items-center gap-1">
+          {copiedPrompt ? (
+            <>
+              <Check className="w-2.5 h-2.5 text-neutral-300 flex-shrink-0" />
+              <span className="text-neutral-300">Copied!</span>
+            </>
+          ) : (
+            job.prompt
+          )}
+        </p>
+      </button>
       
       {/* Progress bar */}
       {job.status === 'processing' && (
