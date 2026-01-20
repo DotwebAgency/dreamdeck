@@ -81,10 +81,10 @@ export function MobileQuickSettings({ onExpandSettings }: MobileQuickSettingsPro
       </div>
 
       {/* Visual Aspect Ratio Cards */}
-      <div className="px-2 pb-3">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-2 -mx-2 snap-x snap-mandatory">
+      <div className="px-2 pb-3 overflow-visible">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pt-2 pb-2 px-2 -mx-2 snap-x snap-mandatory">
           {presets.map((preset) => (
-            <div key={preset.label} className="snap-start">
+            <div key={preset.label} className="snap-start shrink-0">
               <VisualAspectRatioCard
                 preset={preset}
                 isSelected={currentPreset?.label === preset.label}

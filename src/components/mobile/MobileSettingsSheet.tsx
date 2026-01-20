@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { X, Dices, Zap } from 'lucide-react';
+import { X, Dices, Zap, Sparkles } from 'lucide-react';
 import { useGenerationStore } from '@/store/useGenerationStore';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -14,10 +14,15 @@ interface MobileSettingsSheetProps {
   onClose: () => void;
 }
 
+// Separate presets by category
+const standardPresets = RESOLUTION_PRESETS.filter(p => p.category === 'standard');
+const maxPresets = RESOLUTION_PRESETS.filter(p => p.category === 'max');
+
 export function MobileSettingsSheet({ isOpen, onClose }: MobileSettingsSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const [translateY, setTranslateY] = useState(0);
   const touchStartRef = useRef<{ y: number } | null>(null);
+  const [qualityTab, setQualityTab] = useState<'standard' | 'max'>('max');
 
   const {
     resolution,
@@ -31,6 +36,12 @@ export function MobileSettingsSheet({ isOpen, onClose }: MobileSettingsSheetProp
     autoSave,
     setAutoSave,
   } = useGenerationStore();
+  
+  // Determine current quality tab based on selected resolution
+  useEffect(() => {
+    const isMax = resolution.width >= 4000 || resolution.height >= 4000;
+    setQualityTab(isMax ? 'max' : 'standard');
+  }, [resolution]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartRef.current = { y: e.touches[0].clientY };
@@ -122,29 +133,86 @@ export function MobileSettingsSheet({ isOpen, onClose }: MobileSettingsSheetProp
             <label className="text-[11px] uppercase tracking-[0.1em] text-muted mb-3 block">
               Resolution
             </label>
+            
+            {/* Quality Toggle */}
+            <div className="flex rounded-lg bg-[var(--bg-void)] p-1 mb-4">
+              <button
+                onClick={() => setQualityTab('standard')}
+                className={cn(
+                  'flex-1 py-2 px-3 rounded-md text-[12px] font-medium',
+                  'transition-all duration-200',
+                  qualityTab === 'standard'
+                    ? 'bg-[var(--bg-soft)] text-[var(--text-primary)] shadow-sm'
+                    : 'text-[var(--text-muted)]'
+                )}
+              >
+                Standard
+              </button>
+              <button
+                onClick={() => setQualityTab('max')}
+                className={cn(
+                  'flex-1 py-2 px-3 rounded-md text-[12px] font-medium',
+                  'flex items-center justify-center gap-1.5',
+                  'transition-all duration-200',
+                  qualityTab === 'max'
+                    ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 shadow-sm'
+                    : 'text-[var(--text-muted)]'
+                )}
+              >
+                <Sparkles className="w-3 h-3" />
+                4K Ultra
+              </button>
+            </div>
+            
+            {/* Resolution Grid */}
             <div className="grid grid-cols-4 gap-2">
-              {RESOLUTION_PRESETS.slice(0, 8).map((preset) => {
+              {(qualityTab === 'standard' ? standardPresets : maxPresets).map((preset) => {
                 const isSelected = resolution.width === preset.width && resolution.height === preset.height;
+                const aspectRatio = preset.width / preset.height;
                 return (
                   <button
                     key={preset.label}
                     onClick={() => setResolution({ width: preset.width, height: preset.height })}
                     className={cn(
-                      'py-2 px-3 rounded-lg text-center',
+                      'relative py-3 px-2 rounded-lg text-center',
                       'border transition-all',
+                      'flex flex-col items-center gap-1.5',
                       isSelected
-                        ? 'border-white bg-white/10 text-[var(--text-primary)]'
+                        ? qualityTab === 'max' 
+                          ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
+                          : 'border-white bg-white/10 text-[var(--text-primary)]'
                         : 'border-default text-muted active:bg-[var(--bg-mid)]'
                     )}
                   >
-                    <span className="text-xs font-medium">{preset.label}</span>
+                    {/* Aspect ratio visual preview */}
+                    <div 
+                      className={cn(
+                        'rounded-sm transition-colors',
+                        isSelected 
+                          ? qualityTab === 'max' ? 'bg-amber-500/30' : 'bg-white/30'
+                          : 'bg-[var(--text-muted)]/20'
+                      )}
+                      style={{
+                        width: aspectRatio >= 1 ? '20px' : `${20 * aspectRatio}px`,
+                        height: aspectRatio <= 1 ? '20px' : `${20 / aspectRatio}px`,
+                      }}
+                    />
+                    <span className="text-[11px] font-medium">{preset.label.replace(' 4K', '')}</span>
                   </button>
                 );
               })}
             </div>
-            <p className="text-[10px] text-subtle mt-2 text-center">
-              {resolution.width}×{resolution.height}
-            </p>
+            
+            <div className="flex items-center justify-between mt-3">
+              <p className="text-[10px] text-subtle">
+                {resolution.width}×{resolution.height}
+              </p>
+              {qualityTab === 'max' && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
+                  ~16MP
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Number of Images */}

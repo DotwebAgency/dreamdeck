@@ -50,9 +50,9 @@ export function VisualAspectRatioCard({ preset, isSelected, onSelect }: VisualAs
       {/* 4K Badge */}
       {is4K && (
         <span className={cn(
-          'absolute -top-1.5 -right-1.5',
+          'absolute top-1 right-1',
           'px-1 py-0.5',
-          'text-[8px] font-bold uppercase tracking-wide',
+          'text-[7px] font-bold uppercase tracking-wide',
           'bg-amber-500 text-amber-950',
           'rounded'
         )}>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Sparkles, Zap, Plus, Layers, AlertCircle } from 'lucide-react';
+import { Wand2, Zap, Plus, Layers, AlertCircle } from 'lucide-react';
 import { useGenerationStore, useCanGenerate, useActiveJobCount, useQueueCapacityUsed, useQueueCapacityMax } from '@/store/useGenerationStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -86,7 +86,7 @@ export function GenerateButton() {
             </>
           ) : (
             <>
-              <Sparkles className="w-5 h-5" />
+              <Wand2 className="w-5 h-5" />
               <span>Generate</span>
             </>
           )}

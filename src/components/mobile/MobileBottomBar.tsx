@@ -2,17 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { 
-  Sparkles, 
-  RefreshCw, 
+  Wand2,
+  Send,
   ChevronUp, 
   ChevronDown,
-  History,
-  Trash2,
-  MoreHorizontal,
-  X,
-  Plus,
-  Layers,
-  Send
+  Plus
 } from 'lucide-react';
 import { useGenerationStore, useCanGenerate, useActiveJobCount, useQueueCapacityUsed, useQueueCapacityMax } from '@/store/useGenerationStore';
 import { cn } from '@/lib/utils';
@@ -139,14 +133,16 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
             'bg-[var(--bg-void)] border-b border-[var(--border-subtle)]',
             'safe-top'
           )}>
+            {/* Left - Done button */}
             <button
               onClick={handleClose}
-              className="flex items-center gap-2 text-[var(--text-secondary)]"
+              className="flex items-center gap-2 text-[var(--text-secondary)] min-w-[80px]"
             >
               <ChevronDown className="w-5 h-5" />
               <span className="text-[13px]">Done</span>
             </button>
             
+            {/* Center - Character count */}
             <span className={cn(
               'text-[11px] tabular-nums',
               prompt.length > 1800 ? 'text-[var(--error)]' : 
@@ -156,14 +152,24 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
               {prompt.length}/2000
             </span>
             
-            {prompt.length > 0 && (
-              <button
-                onClick={handleClear}
-                className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)]"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
+            {/* Right - Generate button */}
+            <button
+              onClick={() => {
+                if (canGenerate) handleGenerate();
+                handleClose();
+              }}
+              disabled={!canGenerate}
+              className={cn(
+                'flex items-center gap-1.5 px-4 py-2 rounded-lg min-w-[44px] justify-center',
+                'text-[13px] font-medium',
+                'transition-all duration-150',
+                canGenerate
+                  ? 'bg-[var(--text-primary)] text-[var(--bg-void)]'
+                  : 'bg-[var(--bg-soft)] text-[var(--text-muted)]'
+              )}
+            >
+              <Send className="w-4 h-4" />
+            </button>
           </div>
           
           {/* Textarea - takes remaining space */}
@@ -232,7 +238,7 @@ Examples:
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4" />
+                    <Wand2 className="w-4 h-4" />
                     <span>Generate</span>
                   </>
                 )}
@@ -303,7 +309,7 @@ Examples:
                 </span>
               </>
             ) : (
-              <Sparkles className="w-5 h-5" />
+              <Wand2 className="w-5 h-5" />
             )}
           </button>
         </div>

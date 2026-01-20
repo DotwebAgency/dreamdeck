@@ -59,17 +59,18 @@ export function MobileLayout() {
         onClose={closeSettings} 
       />
 
-      {/* Generation progress indicator - fixed at exact header bottom */}
+      {/* Generation progress indicator - fixed at absolute top pixel of screen */}
       {isAnyJobRunning && (
-        <div className={cn(
-          'fixed left-0 right-0 z-30',
-          'h-1 bg-[var(--bg-soft)]',
-          'overflow-hidden'
-        )}
-        style={{ top: 'calc(56px + env(safe-area-inset-top, 0px))' }}
+        <div 
+          className={cn(
+            'fixed top-0 left-0 right-0 z-[100]', // Absolute top pixel
+            'h-0.5 bg-[var(--bg-deep)]',
+            'overflow-hidden'
+          )}
         >
           <div className={cn(
-            'h-full w-1/3 bg-gradient-to-r from-emerald-500/0 via-emerald-500 to-emerald-500/0',
+            'h-full w-full',
+            'bg-gradient-to-r from-transparent via-emerald-500 to-transparent',
             'animate-[shimmer_1.5s_ease-in-out_infinite]'
           )} />
         </div>
