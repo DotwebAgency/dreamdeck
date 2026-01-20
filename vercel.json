@@ -12,22 +12,6 @@
       "maxDuration": 15
     }
   },
-  "images": {
-    "remotePatterns": [
-      {
-        "protocol": "https",
-        "hostname": "**.wavespeed.ai"
-      },
-      {
-        "protocol": "https",
-        "hostname": "cdn.wavespeed.ai"
-      },
-      {
-        "protocol": "https",
-        "hostname": "api.wavespeed.ai"
-      }
-    ]
-  },
   "headers": [
     {
       "source": "/api/(.*)",
