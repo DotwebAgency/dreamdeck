@@ -70,7 +70,7 @@ export function MobileLayout() {
         >
           <div className={cn(
             'h-full w-full',
-            'bg-gradient-to-r from-transparent via-emerald-500 to-transparent',
+            'bg-gradient-to-r from-transparent via-neutral-400 to-transparent',
             'animate-[shimmer_1.5s_ease-in-out_infinite]'
           )} />
         </div>

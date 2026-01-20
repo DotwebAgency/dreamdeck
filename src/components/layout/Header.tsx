@@ -136,11 +136,11 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
               <div
                 className={cn(
                   'w-8 h-8 flex items-center justify-center relative',
-                  'bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500',
+                  'bg-gradient-to-br from-zinc-600 via-zinc-500 to-zinc-400',
                   'rounded-xl',
                   'transition-all duration-300',
                   'hover:scale-105',
-                  'shadow-lg shadow-fuchsia-500/20',
+                  'shadow-lg shadow-black/40',
                   'overflow-hidden'
                 )}
               >
@@ -164,7 +164,7 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
                 
                 {/* Status indicator - inline with logo */}
                 <div className="hidden sm:flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-secondary)] animate-pulse" />
                   <span 
                     className={cn(
                       'text-[10px] tracking-[0.05em]',

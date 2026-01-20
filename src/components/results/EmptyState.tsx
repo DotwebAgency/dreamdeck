@@ -27,7 +27,8 @@ export function EmptyState() {
             <div className="relative">
               <OrbitAnimation size="lg" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
+                {/* Monochrome pulse indicator */}
+                <div className="w-3 h-3 rounded-full bg-[var(--text-secondary)] animate-pulse" />
               </div>
             </div>
           </div>
@@ -55,9 +56,9 @@ export function EmptyState() {
             {queuedCount > 0 && `${queuedCount} in queue`}
           </p>
 
-          {/* Tip */}
+          {/* Tip - monochrome styling */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-soft)] border border-[var(--border-subtle)]">
-            <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
+            <Loader2 className="w-4 h-4 text-[var(--text-secondary)] animate-spin" />
             <span className="text-[12px] text-[var(--text-secondary)]">
               You can add more jobs while these process
             </span>

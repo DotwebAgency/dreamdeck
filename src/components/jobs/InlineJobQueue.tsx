@@ -56,36 +56,36 @@ const CompactJobCard = memo(function CompactJobCard({
     return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
   };
 
-  // Status configurations
+  // Status configurations - using slate palette
   const statusConfig = {
     queued: { 
       icon: Clock, 
       label: 'Queued',
-      gradient: 'from-zinc-500/20 to-zinc-600/10',
-      border: 'border-zinc-500/30',
-      text: 'text-zinc-400',
+      gradient: 'from-neutral-500/20 to-neutral-600/10',
+      border: 'border-neutral-500/30',
+      text: 'text-neutral-400',
       glow: ''
     },
     processing: { 
       icon: Sparkles, 
       label: 'Creating',
-      gradient: 'from-emerald-500/20 via-teal-500/15 to-cyan-500/10',
-      border: 'border-emerald-500/40',
-      text: 'text-emerald-400',
-      glow: 'shadow-[0_0_20px_-5px_rgba(16,185,129,0.3)]'
+      gradient: 'from-neutral-400/20 via-neutral-500/15 to-neutral-600/10',
+      border: 'border-neutral-400/40',
+      text: 'text-neutral-300',
+      glow: 'shadow-[0_0_20px_-5px_rgba(163,163,163,0.3)]'
     },
     completed: { 
       icon: CheckCircle2, 
       label: 'Done',
-      gradient: 'from-emerald-600/15 to-green-600/10',
-      border: 'border-emerald-600/30',
-      text: 'text-emerald-500',
+      gradient: 'from-neutral-500/15 to-neutral-600/10',
+      border: 'border-neutral-500/30',
+      text: 'text-neutral-400',
       glow: ''
     },
     failed: { 
       icon: AlertCircle, 
       label: 'Failed',
-      gradient: 'from-red-500/20 to-rose-600/10',
+      gradient: 'from-red-500/20 to-red-600/10',
       border: 'border-red-500/40',
       text: 'text-red-400',
       glow: ''
@@ -140,7 +140,7 @@ const CompactJobCard = memo(function CompactJobCard({
           
           {/* Timer for processing */}
           {job.status === 'processing' && (
-            <span className="text-[11px] font-mono text-emerald-400/80 tabular-nums">
+            <span className="text-[11px] font-mono text-neutral-300/80 tabular-nums">
               {formatTime(elapsed)}
             </span>
           )}
@@ -177,7 +177,7 @@ const CompactJobCard = memo(function CompactJobCard({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[10px]">
               <span className="text-white/40">Progress</span>
-              <span className="text-emerald-400 font-medium tabular-nums">{job.progress}%</span>
+              <span className="text-neutral-300 font-medium tabular-nums">{job.progress}%</span>
             </div>
             <div className="relative h-1.5 rounded-full bg-black/30 overflow-hidden">
               {/* Animated shimmer on track */}
@@ -186,7 +186,7 @@ const CompactJobCard = memo(function CompactJobCard({
               </div>
               {/* Actual progress */}
               <div 
-                className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 rounded-full transition-all duration-500 ease-out"
+                className="h-full bg-gradient-to-r from-neutral-400 via-neutral-500 to-neutral-600 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${job.progress}%` }}
               />
             </div>
@@ -290,10 +290,11 @@ const MobileJobCard = memo(function MobileJobCard({
   const retryJob = useGenerationStore((s) => s.retryJob);
   const cancelJob = useGenerationStore((s) => s.cancelJob);
 
+  // Status configurations - using slate palette
   const statusConfig = {
-    queued: { icon: Clock, color: 'text-zinc-400', bg: 'bg-zinc-500/20' },
-    processing: { icon: Sparkles, color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-    completed: { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/20' },
+    queued: { icon: Clock, color: 'text-neutral-400', bg: 'bg-neutral-500/20' },
+    processing: { icon: Sparkles, color: 'text-neutral-300', bg: 'bg-neutral-400/20' },
+    completed: { icon: CheckCircle2, color: 'text-neutral-400', bg: 'bg-neutral-500/20' },
     failed: { icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-500/20' },
   }[job.status];
   
@@ -306,7 +307,7 @@ const MobileJobCard = memo(function MobileJobCard({
       'bg-[var(--surface-glass)]/60 backdrop-blur-md',
       'border border-white/10',
       'p-2.5',
-      job.status === 'processing' && 'ring-1 ring-emerald-500/30'
+      job.status === 'processing' && 'ring-1 ring-neutral-400/30'
     )}>
       {/* Compact header */}
       <div className="flex items-center justify-between mb-2">
@@ -322,7 +323,7 @@ const MobileJobCard = memo(function MobileJobCard({
         </div>
         
         {job.status === 'processing' && (
-          <span className="text-[10px] text-emerald-400 font-mono tabular-nums">
+          <span className="text-[10px] text-neutral-300 font-mono tabular-nums">
             {job.progress}%
           </span>
         )}
@@ -341,7 +342,7 @@ const MobileJobCard = memo(function MobileJobCard({
       {job.status === 'processing' && (
         <div className="h-1 rounded-full bg-black/30 overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full transition-all"
+            className="h-full bg-gradient-to-r from-neutral-400 to-neutral-500 rounded-full transition-all"
             style={{ width: `${job.progress}%` }}
           />
         </div>
@@ -513,13 +514,13 @@ export function InlineJobQueue() {
           <div className="relative">
             {processingCount > 0 ? (
               <div className="relative">
-                <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
-                <div className="absolute inset-0 w-4 h-4 bg-emerald-400/20 rounded-full animate-ping" />
+                <Loader2 className="w-4 h-4 text-neutral-300 animate-spin" />
+                <div className="absolute inset-0 w-4 h-4 bg-neutral-400/20 rounded-full animate-ping" />
               </div>
             ) : activeCount > 0 ? (
-              <Clock className="w-4 h-4 text-zinc-400" />
+              <Clock className="w-4 h-4 text-neutral-400" />
             ) : completedCount > 0 ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <CheckCircle2 className="w-4 h-4 text-neutral-400" />
             ) : (
               <AlertCircle className="w-4 h-4 text-red-400" />
             )}

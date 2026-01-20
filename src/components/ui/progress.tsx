@@ -16,7 +16,7 @@ const Progress = React.forwardRef<
   const variants = {
     default: 'bg-gradient-to-r from-[var(--text-secondary)] to-[var(--text-primary)]',
     gradient: 'bg-gradient-to-r from-[var(--accent-secondary)] via-[var(--accent-primary)] to-[var(--accent-secondary)]',
-    success: 'bg-gradient-to-r from-[var(--success)] to-emerald-300',
+    success: 'bg-gradient-to-r from-neutral-500 to-neutral-400',
     error: 'bg-gradient-to-r from-[var(--error)] to-red-300',
   };
 

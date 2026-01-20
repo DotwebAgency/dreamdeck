@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /* ============================================
-   DREAMDECK — SWISS MINIMALIST SaaS UI
-   Clean, Professional, Appropriately Sized
+   DREAMDECK — PURE BLACK SLATE DESIGN SYSTEM
+   Monochromatic with Orange 4K Accent Only
    ============================================ */
 
 /* === ROOT DESIGN TOKENS === */
@@ -26,11 +26,10 @@
   --space-16: 64px;
 
   /* === PROFESSIONAL SAAS TYPOGRAPHY === */
-  /* Standard web sizes - NOT oversized */
   --text-2xs: 10px;
   --text-xs: 11px;
   --text-sm: 13px;
-  --text-base: 14px;       /* Standard SaaS base */
+  --text-base: 14px;
   --text-md: 15px;
   --text-lg: 16px;
   --text-xl: 18px;
@@ -72,68 +71,72 @@
   --duration-fast: 100ms;
   --duration-normal: 200ms;
   --duration-slow: 300ms;
+  
+  /* === THE ONLY ACCENT COLOR: ORANGE (for 4K badges only) === */
+  --accent-orange: #f97316;
+  --accent-orange-muted: rgba(249, 115, 22, 0.15);
 }
 
 /* ==========================================
-   DARK MODE — FUTURISTIC COCKPIT
+   DARK MODE — PURE BLACK SLATE
    ========================================== */
 :root,
 .dark {
-  /* Cockpit depth layers */
-  --bg-void: #020204;
-  --bg-deep: #070709;
-  --bg-mid: #0d0e11;
-  --bg-soft: #141519;
-  --bg-elevated: #1a1b21;
-  --bg-hover: #22232a;
-  --bg-active: #2a2b33;
+  /* Pure black foundation */
+  --bg-void: #000000;
+  --bg-deep: #050505;
+  --bg-mid: #0a0a0a;
+  --bg-soft: #111111;
+  --bg-elevated: #161616;
+  --bg-hover: #1c1c1c;
+  --bg-active: #222222;
   
-  /* Glass overlays */
-  --surface-overlay: rgba(255, 255, 255, 0.015);
-  --surface-highlight: rgba(255, 255, 255, 0.025);
-  --surface-glass: rgba(7, 7, 9, 0.88);
+  /* Glass overlays - pure black based */
+  --surface-overlay: rgba(255, 255, 255, 0.02);
+  --surface-highlight: rgba(255, 255, 255, 0.03);
+  --surface-glass: rgba(5, 5, 5, 0.92);
   
-  /* Text hierarchy - soft, NOT bright white */
-  --text-primary: #E8EAED;
-  --text-secondary: #9BA3AF;
-  --text-muted: #6B7280;
-  --text-subtle: #4B5563;
-  --text-disabled: #374151;
+  /* Text hierarchy - slate grays only */
+  --text-primary: #e4e4e7;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --text-subtle: #52525b;
+  --text-disabled: #3f3f46;
   
-  /* Borders */
-  --border-default: rgba(255, 255, 255, 0.06);
-  --border-subtle: rgba(255, 255, 255, 0.03);
-  --border-strong: rgba(255, 255, 255, 0.10);
-  --border-focus: rgba(255, 255, 255, 0.18);
+  /* Borders - pure gray */
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --border-focus: rgba(255, 255, 255, 0.20);
   
-  /* Accents */
-  --accent-primary: #E8EAED;
-  --accent-secondary: #9BA3AF;
-  --accent-brand: #C4C8D0;
+  /* Monochrome accents */
+  --accent-primary: #e4e4e7;
+  --accent-secondary: #a1a1aa;
+  --accent-brand: #d4d4d8;
   
-  /* Status */
-  --success: #4ade80;
-  --success-muted: rgba(74, 222, 128, 0.12);
-  --warning: #facc15;
-  --warning-muted: rgba(250, 204, 21, 0.12);
-  --error: #f87171;
-  --error-muted: rgba(248, 113, 113, 0.12);
-  --info: #60a5fa;
-  --info-muted: rgba(96, 165, 250, 0.12);
+  /* Status colors - muted slate variants */
+  --success: #a1a1aa;
+  --success-muted: rgba(161, 161, 170, 0.12);
+  --warning: var(--accent-orange);
+  --warning-muted: var(--accent-orange-muted);
+  --error: #a1a1aa;
+  --error-muted: rgba(161, 161, 170, 0.12);
+  --info: #a1a1aa;
+  --info-muted: rgba(161, 161, 170, 0.12);
   
-  /* FLAT UI — Minimal shadows in dark mode too */
+  /* FLAT UI — Minimal shadows */
   --shadow-xs: none;
   --shadow-sm: none;
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.6);
-  --shadow-2xl: 0 16px 48px rgba(0, 0, 0, 0.7);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.7);
+  --shadow-2xl: 0 16px 48px rgba(0, 0, 0, 0.8);
   
-  /* Subtle glows for emphasis only */
+  /* Subtle glows */
   --glow-sm: none;
   --glow-md: none;
-  --glow-lg: 0 0 24px rgba(232, 234, 237, 0.05);
-  --glow-brand: 0 0 20px rgba(196, 200, 208, 0.08);
+  --glow-lg: 0 0 24px rgba(228, 228, 231, 0.03);
+  --glow-brand: 0 0 20px rgba(212, 212, 216, 0.05);
   
   /* No insets in flat design */
   --inset-sm: none;
@@ -146,54 +149,65 @@
 }
 
 /* ==========================================
-   LIGHT MODE
+   LIGHT MODE — PURE WHITE/SLATE
    ========================================== */
 .light {
-  /* FLAT UI — Pure white surfaces */
-  --bg-void: #FFFFFF;
-  --bg-deep: #FAFAFA;
-  --bg-mid: #F5F5F5;
-  --bg-soft: #EEEEEE;
-  --bg-elevated: #FFFFFF;
-  --bg-hover: #F5F5F5;
-  --bg-active: #EEEEEE;
+  /* Pure white foundation */
+  --bg-void: #ffffff;
+  --bg-deep: #fafafa;
+  --bg-mid: #f5f5f5;
+  --bg-soft: #e5e5e5;
+  --bg-elevated: #ffffff;
+  --bg-hover: #f0f0f0;
+  --bg-active: #e5e5e5;
   
-  /* No gradients in flat design */
+  /* Clean surfaces */
   --surface-overlay: transparent;
   --surface-highlight: transparent;
   --surface-glass: rgba(255, 255, 255, 0.95);
   
-  /* Soft charcoal text */
-  --text-primary: #1A1A1A;
-  --text-secondary: #4A4A4A;
-  --text-muted: #6B6B6B;
-  --text-subtle: #9A9A9A;
-  --text-disabled: #CCCCCC;
+  /* Slate text */
+  --text-primary: #18181b;
+  --text-secondary: #3f3f46;
+  --text-muted: #71717a;
+  --text-subtle: #a1a1aa;
+  --text-disabled: #d4d4d8;
   
-  /* Clean, minimal borders */
-  --border-default: rgba(0, 0, 0, 0.08);
-  --border-subtle: rgba(0, 0, 0, 0.04);
-  --border-strong: rgba(0, 0, 0, 0.15);
-  --border-focus: rgba(0, 0, 0, 0.25);
+  /* Clean borders */
+  --border-default: rgba(0, 0, 0, 0.10);
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --border-strong: rgba(0, 0, 0, 0.18);
+  --border-focus: rgba(0, 0, 0, 0.30);
   
-  --accent-primary: #1A1A1A;
-  --accent-secondary: #4A4A4A;
-  --accent-brand: #1F1F1F;
+  /* Monochrome accents */
+  --accent-primary: #18181b;
+  --accent-secondary: #3f3f46;
+  --accent-brand: #27272a;
   
-  /* FLAT — Minimal shadows (only on primary CTAs on hover) */
+  /* Status - slate variants for light mode */
+  --success: #52525b;
+  --success-muted: rgba(82, 82, 91, 0.10);
+  --warning: var(--accent-orange);
+  --warning-muted: var(--accent-orange-muted);
+  --error: #52525b;
+  --error-muted: rgba(82, 82, 91, 0.10);
+  --info: #52525b;
+  --info-muted: rgba(82, 82, 91, 0.10);
+  
+  /* Minimal shadows */
   --shadow-xs: none;
   --shadow-sm: none;
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.10);
-  --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.10);
   
-  /* No glows in light mode flat design */
+  /* No glows in light mode */
   --glow-sm: none;
   --glow-md: none;
   --glow-lg: none;
   --glow-brand: none;
   
-  /* No insets in flat design */
+  /* No insets */
   --inset-sm: none;
   --inset-md: none;
   --inset-highlight: none;
@@ -246,7 +260,7 @@
     background-color: var(--bg-void);
     color: var(--text-primary);
     font-family: var(--font-sans);
-    font-size: var(--text-base);      /* 14px - standard SaaS */
+    font-size: var(--text-base);
     font-weight: 400;
     line-height: var(--leading-normal);
     letter-spacing: var(--tracking-normal);
@@ -256,7 +270,7 @@
     transition: background-color var(--duration-slow), color var(--duration-slow);
   }
 
-  /* Headings - Clean, not oversized */
+  /* Headings */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     font-weight: 500;
@@ -265,10 +279,10 @@
     color: var(--text-primary);
   }
 
-  h1 { font-size: var(--text-3xl); }  /* 24px */
-  h2 { font-size: var(--text-2xl); }  /* 20px */
-  h3 { font-size: var(--text-xl); }   /* 18px */
-  h4 { font-size: var(--text-lg); }   /* 16px */
+  h1 { font-size: var(--text-3xl); }
+  h2 { font-size: var(--text-2xl); }
+  h3 { font-size: var(--text-xl); }
+  h4 { font-size: var(--text-lg); }
 
   p {
     color: var(--text-secondary);
@@ -483,18 +497,19 @@
 
 /* === COMPONENT STYLES === */
 @layer components {
+  /* Status indicator - now monochrome */
   .status-indicator {
     width: 6px;
     height: 6px;
     border-radius: var(--radius-full);
-    background: var(--success);
-    box-shadow: 0 0 8px var(--success);
+    background: var(--text-secondary);
+    box-shadow: 0 0 8px var(--text-muted);
     animation: statusPulse 2s ease-in-out infinite;
   }
   
   @keyframes statusPulse {
-    0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--success); }
-    50% { opacity: 0.7; box-shadow: 0 0 12px var(--success); }
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--text-muted); }
+    50% { opacity: 0.7; box-shadow: 0 0 12px var(--text-muted); }
   }
   
   .btn-premium {

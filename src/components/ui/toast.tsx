@@ -59,24 +59,24 @@ const toastVariants = cva(
           'text-[var(--text-primary)]',
         ].join(' '),
         success: [
-          'border-emerald-500/30',
-          'bg-emerald-950/80',
-          'text-emerald-300',
+          'border-[var(--text-muted)]/30',
+          'bg-[var(--bg-elevated)]/90',
+          'text-[var(--text-primary)]',
         ].join(' '),
         destructive: [
-          'border-red-500/30',
-          'bg-red-950/80',
-          'text-red-300',
+          'border-[var(--text-muted)]/30',
+          'bg-[var(--bg-elevated)]/90',
+          'text-[var(--text-primary)]',
         ].join(' '),
         warning: [
-          'border-amber-500/30',
-          'bg-amber-950/80',
-          'text-amber-300',
+          'border-[var(--accent-orange)]/30',
+          'bg-[var(--bg-elevated)]/90',
+          'text-[var(--text-primary)]',
         ].join(' '),
         info: [
-          'border-blue-500/30',
-          'bg-blue-950/80',
-          'text-blue-300',
+          'border-[var(--text-muted)]/30',
+          'bg-[var(--bg-elevated)]/90',
+          'text-[var(--text-primary)]',
         ].join(' '),
       },
     },
@@ -118,8 +118,8 @@ const ToastAction = React.forwardRef<
       'focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]',
       'disabled:pointer-events-none disabled:opacity-50',
       // Variant-specific
-      'group-[.success]:border-[var(--success)]/30 group-[.success]:text-[var(--success)]',
-      'group-[.destructive]:border-[var(--error)]/30 group-[.destructive]:text-[var(--error)]',
+      'group-[.success]:border-[var(--border-strong)] group-[.success]:text-[var(--text-primary)]',
+      'group-[.destructive]:border-[var(--border-strong)] group-[.destructive]:text-[var(--text-primary)]',
       className
     )}
     {...props}
@@ -143,8 +143,8 @@ const ToastClose = React.forwardRef<
       'focus:ring-2 focus:ring-[var(--border-focus)]',
       'group-hover:opacity-100',
       // Variant-specific
-      'group-[.destructive]:text-[var(--error)]',
-      'group-[.success]:text-[var(--success)]',
+      'group-[.destructive]:text-[var(--text-secondary)]',
+      'group-[.success]:text-[var(--text-secondary)]',
       className
     )}
     toast-close=""
@@ -185,14 +185,14 @@ const ToastDescription = React.forwardRef<
 ));
 ToastDescription.displayName = ToastPrimitives.Description.displayName;
 
-// Toast icon component for convenience
+// Toast icon component for convenience - monochrome icons
 const ToastIcon = ({ variant }: { variant?: 'default' | 'success' | 'destructive' | 'warning' | 'info' }) => {
   const icons = {
     default: null,
-    success: <CheckCircle2 className="h-5 w-5 text-[var(--success)]" />,
-    destructive: <AlertCircle className="h-5 w-5 text-[var(--error)]" />,
-    warning: <AlertTriangle className="h-5 w-5 text-[var(--warning)]" />,
-    info: <Info className="h-5 w-5 text-[var(--info)]" />,
+    success: <CheckCircle2 className="h-5 w-5 text-[var(--text-secondary)]" />,
+    destructive: <AlertCircle className="h-5 w-5 text-[var(--text-secondary)]" />,
+    warning: <AlertTriangle className="h-5 w-5 text-[var(--accent-orange)]" />,
+    info: <Info className="h-5 w-5 text-[var(--text-secondary)]" />,
   };
   return icons[variant || 'default'];
 };

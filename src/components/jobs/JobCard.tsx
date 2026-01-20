@@ -35,9 +35,9 @@ const STATUS_CONFIG = {
   processing: {
     icon: Sparkles,
     label: 'Creating',
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/10',
-    dotColor: 'bg-emerald-400',
+    color: 'text-neutral-300',
+    bg: 'bg-neutral-400/10',
+    dotColor: 'bg-neutral-400',
     animate: true,
   },
   completed: {
@@ -45,7 +45,7 @@ const STATUS_CONFIG = {
     label: 'Complete',
     color: 'text-[var(--text-primary)]',
     bg: 'bg-[var(--accent-primary)]/10',
-    dotColor: 'bg-[var(--success)]',
+    dotColor: 'bg-neutral-400',
     animate: false,
   },
   failed: {
@@ -139,13 +139,13 @@ export const JobCard = memo(function JobCard({ job, queuePosition, onImageClick 
         'border border-[var(--border-subtle)]',
         'transition-all duration-300',
         'animate-fade-in',
-        job.status === 'processing' && 'ring-1 ring-emerald-500/20',
+        job.status === 'processing' && 'ring-1 ring-neutral-400/20',
         job.status === 'completed' && 'opacity-80 hover:opacity-100'
       )}
     >
       {/* Gradient top accent for processing */}
       {job.status === 'processing' && (
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/0 via-emerald-500 to-emerald-500/0 animate-pulse" />
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-neutral-400/0 via-neutral-400 to-neutral-400/0 animate-pulse" />
       )}
       
       <div className="p-4 space-y-3">

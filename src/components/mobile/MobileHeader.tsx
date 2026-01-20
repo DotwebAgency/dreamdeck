@@ -55,9 +55,9 @@ export function MobileHeader({ onSettingsClick }: MobileHeaderProps) {
         <div 
           className={cn(
             'w-8 h-8 flex items-center justify-center',
-            'bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500',
+            'bg-gradient-to-br from-zinc-600 via-zinc-500 to-zinc-400',
             'rounded-xl',
-            'shadow-lg shadow-fuchsia-500/20'
+            'shadow-lg shadow-black/40'
           )}
         >
           {/* Modern D letterform */}
@@ -69,7 +69,7 @@ export function MobileHeader({ onSettingsClick }: MobileHeaderProps) {
           <span className="text-[12px] font-medium tracking-[0.05em] text-[var(--text-primary)]">
             DREAMDECK
           </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-secondary)] animate-pulse" />
         </div>
       </div>
 

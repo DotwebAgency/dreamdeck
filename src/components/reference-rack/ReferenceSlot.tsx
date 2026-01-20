@@ -232,7 +232,7 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
               className={cn(
                 'w-2.5 h-2.5',
                 stars === 3
-                  ? 'text-amber-400 fill-amber-400'
+                  ? 'text-[var(--text-primary)] fill-[var(--text-primary)]'
                   : stars === 2
                     ? 'text-[var(--text-secondary)] fill-[var(--text-secondary)]'
                     : 'text-[var(--text-muted)] fill-[var(--text-muted)]'
@@ -273,9 +273,9 @@ export function ReferenceSlot({ index, slot }: ReferenceSlotProps) {
                   <div className="absolute bottom-1 right-1 p-0.5 rounded-[var(--radius-xs)] bg-black/70 cursor-help">
                     <span className={cn(
                       'text-[8px] font-mono px-1',
-                      compressionStats.quality >= 80 ? 'text-green-400' :
-                      compressionStats.quality >= 65 ? 'text-amber-400' :
-                      'text-red-400'
+                      compressionStats.quality >= 80 ? 'text-[var(--text-primary)]' :
+                      compressionStats.quality >= 65 ? 'text-[var(--text-secondary)]' :
+                      'text-[var(--text-muted)]'
                     )}>
                       {compressionStats.quality}%
                     </span>

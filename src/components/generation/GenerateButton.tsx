@@ -106,7 +106,7 @@ export function GenerateButton() {
             </span>
           )}
           {mode === 'turbo' && (
-            <Zap className="w-4 h-4 ml-1 text-amber-500" />
+            <Zap className="w-4 h-4 ml-1 text-[var(--text-secondary)]" />
           )}
         </span>
         
