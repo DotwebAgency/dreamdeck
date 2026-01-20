@@ -42,12 +42,31 @@ export function MobileHeader({ onSettingsClick }: MobileHeaderProps) {
   return (
     <header 
       className={cn(
-        'flex items-center justify-between px-4 h-14',
         'bg-[var(--bg-void)]/98 glass-subtle',
         'border-b border-[var(--border-subtle)]',
         'safe-top'
       )}
     >
+      {/* Trial expiration banner */}
+      <div className={cn(
+        'h-6 flex items-center justify-center gap-1.5 px-4',
+        'bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10',
+        'border-b border-amber-500/20',
+        'text-[10px] text-amber-400/90'
+      )}>
+        <span>Trial expired.</span>
+        <a 
+          href="https://tryvoiceink.com/buy" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="font-medium text-amber-300 hover:text-amber-200 underline underline-offset-2"
+        >
+          Upgrade to VoiceInk Pro
+        </a>
+      </div>
+      
+      {/* Main header content */}
+      <div className="flex items-center justify-between px-4 h-14">
       {/* Logo */}
       <div className="flex items-center gap-2.5">
         <div 
@@ -101,6 +120,7 @@ export function MobileHeader({ onSettingsClick }: MobileHeaderProps) {
 
         {/* Theme toggle */}
         <ThemeToggle />
+      </div>
       </div>
     </header>
   );

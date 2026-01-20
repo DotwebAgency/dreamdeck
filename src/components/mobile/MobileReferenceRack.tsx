@@ -13,7 +13,6 @@ export function MobileReferenceRack() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [showScrollHint, setShowScrollHint] = useState(true);
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const slotRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
@@ -58,33 +57,22 @@ export function MobileReferenceRack() {
     input.click();
   }, [setSlot]);
 
-  const handleTouchStart = useCallback((index: number, e: React.TouchEvent) => {
+  // Only start drag when touching the grip handle area
+  const handleGripTouchStart = useCallback((index: number, e: React.TouchEvent) => {
+    e.stopPropagation(); // Prevent scroll from triggering
     const touch = e.touches[0];
     dragStartPos.current = { x: touch.clientX, y: touch.clientY };
     
-    longPressTimerRef.current = setTimeout(() => {
-      setIsDragging(true);
-      setDragIndex(index);
-      if (navigator.vibrate) {
-        navigator.vibrate(50);
-      }
-    }, 300); // Faster activation (300ms instead of 400ms)
+    // Start drag immediately when touching grip (no long press needed)
+    setIsDragging(true);
+    setDragIndex(index);
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
   }, []);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging || dragIndex === null) {
-      // Cancel long press if user moves finger too much before activation
-      if (longPressTimerRef.current && dragStartPos.current) {
-        const touch = e.touches[0];
-        const dx = Math.abs(touch.clientX - dragStartPos.current.x);
-        const dy = Math.abs(touch.clientY - dragStartPos.current.y);
-        if (dx > 10 || dy > 10) {
-          clearTimeout(longPressTimerRef.current);
-          longPressTimerRef.current = null;
-        }
-      }
-      return;
-    }
+    if (!isDragging || dragIndex === null) return;
 
     e.preventDefault(); // Prevent scroll while dragging
     
@@ -110,11 +98,6 @@ export function MobileReferenceRack() {
   }, [isDragging, dragIndex]);
 
   const handleTouchEnd = useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    
     // Perform swap if we have valid drag and drop targets
     if (isDragging && dragIndex !== null && dropTargetIndex !== null && dragIndex !== dropTargetIndex) {
       // Call reorderSlots with from and to indices
@@ -130,7 +113,7 @@ export function MobileReferenceRack() {
     setDragIndex(null);
     setDropTargetIndex(null);
     dragStartPos.current = null;
-  }, [isDragging, dragIndex, dropTargetIndex, referenceSlots, reorderSlots]);
+  }, [isDragging, dragIndex, dropTargetIndex, reorderSlots]);
 
   // Priority stars for first 3 slots
   const getPriorityStars = (index: number) => {
@@ -179,7 +162,6 @@ export function MobileReferenceRack() {
               <div
                 key={index}
                 ref={(el) => { slotRefs.current[index] = el; }}
-                onTouchStart={(e) => slot && handleTouchStart(index, e)}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
                 className={cn(
@@ -243,14 +225,19 @@ export function MobileReferenceRack() {
                       </span>
                     </div>
 
-                    {/* Drag handle - more visible */}
-                    <div className={cn(
-                      'absolute top-0.5 left-0.5',
-                      'w-5 h-5 rounded',
-                      'bg-black/60 flex items-center justify-center',
-                      'opacity-70'
-                    )}>
-                      <GripVertical className="w-3 h-3 text-white" />
+                    {/* Drag handle - touch this to drag */}
+                    <div 
+                      className={cn(
+                        'absolute top-0.5 left-0.5',
+                        'w-6 h-6 rounded',
+                        'bg-black/70 flex items-center justify-center',
+                        'active:bg-[var(--accent-primary)]',
+                        'cursor-grab active:cursor-grabbing',
+                        'touch-none' // Prevent scroll when touching this
+                      )}
+                      onTouchStart={(e) => handleGripTouchStart(index, e)}
+                    >
+                      <GripVertical className="w-3.5 h-3.5 text-white" />
                     </div>
 
                     {/* Remove button */}
@@ -308,7 +295,7 @@ export function MobileReferenceRack() {
 
       {/* Help text */}
       <p className="text-[9px] text-[var(--text-subtle)] mt-2">
-        Long-press to drag. First slots have higher influence.
+        Drag ≡ handle to reorder. First slots have higher influence.
       </p>
     </div>
   );

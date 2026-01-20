@@ -59,13 +59,15 @@ export function MobileLayout() {
         onClose={closeSettings} 
       />
 
-      {/* Generation progress indicator - subtle version for mobile */}
+      {/* Generation progress indicator - fixed at exact header bottom */}
       {isAnyJobRunning && (
         <div className={cn(
-          'fixed top-14 left-0 right-0 z-30',
+          'fixed left-0 right-0 z-30',
           'h-1 bg-[var(--bg-soft)]',
           'overflow-hidden'
-        )}>
+        )}
+        style={{ top: 'calc(80px + env(safe-area-inset-top, 0px))' }} /* 56px header + 24px banner */
+        >
           <div className={cn(
             'h-full w-1/3 bg-gradient-to-r from-emerald-500/0 via-emerald-500 to-emerald-500/0',
             'animate-[shimmer_1.5s_ease-in-out_infinite]'

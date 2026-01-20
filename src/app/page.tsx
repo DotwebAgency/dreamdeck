@@ -63,7 +63,7 @@ function DesktopLayout() {
 
       <main
         className={cn(
-          'pt-14', // Header height
+          'pt-[84px]', // Header height (56px) + trial banner (28px)
           'lg:pl-[320px]', // Sidebar width
           'min-h-screen',
           'flex flex-col'

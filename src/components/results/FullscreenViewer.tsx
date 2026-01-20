@@ -49,6 +49,10 @@ export function FullscreenViewer({
   const [showControls, setShowControls] = useState(true);
   const transformRef = useRef<ReactZoomPanPinchRef>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Touch swipe state
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
 
   const hasPrev = images.length > 1 && currentIndex > 0;
   const hasNext = images.length > 1 && currentIndex < images.length - 1;
@@ -131,6 +135,62 @@ export function FullscreenViewer({
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+  
+  // Touch swipe handlers for mobile navigation
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    // Only handle single touch and when not zoomed
+    if (e.touches.length !== 1 || scale > 1.1) return;
+    
+    const touch = e.touches[0];
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now(),
+    };
+    setSwipeOffset(0);
+  }, [scale]);
+  
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current || e.touches.length !== 1 || scale > 1.1) return;
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
+    
+    // Only track horizontal swipes
+    if (deltaY > 50) {
+      touchStartRef.current = null;
+      setSwipeOffset(0);
+      return;
+    }
+    
+    // Limit swipe range and add resistance at edges
+    let offset = deltaX;
+    if ((deltaX > 0 && !hasPrev) || (deltaX < 0 && !hasNext)) {
+      offset = deltaX * 0.3; // Add resistance when at edge
+    }
+    
+    setSwipeOffset(offset);
+  }, [scale, hasPrev, hasNext]);
+  
+  const handleTouchEnd = useCallback(() => {
+    if (!touchStartRef.current) return;
+    
+    const threshold = 80; // Minimum swipe distance
+    const velocity = Math.abs(swipeOffset) / (Date.now() - touchStartRef.current.time);
+    
+    // Fast swipe or long enough swipe
+    if (Math.abs(swipeOffset) > threshold || velocity > 0.5) {
+      if (swipeOffset > 0 && hasPrev) {
+        onNavigate?.('prev');
+      } else if (swipeOffset < 0 && hasNext) {
+        onNavigate?.('next');
+      }
+    }
+    
+    touchStartRef.current = null;
+    setSwipeOffset(0);
+  }, [swipeOffset, hasPrev, hasNext, onNavigate]);
 
   const handleDownload = useCallback(async () => {
     setIsDownloading(true);
@@ -380,44 +440,90 @@ export function FullscreenViewer({
         </button>
       )}
 
-      {/* Zoomable/Pannable image area */}
-      <TransformWrapper
-        ref={transformRef}
-        initialScale={1}
-        minScale={0.1}
-        maxScale={10}
-        centerOnInit
-        wheel={{ step: 0.05, smoothStep: 0.005 }}
-        pinch={{ step: 5 }}
-        doubleClick={{ mode: 'toggle', step: 2 }}
-        panning={{ velocityDisabled: false }}
-        onTransformed={handleScaleChange}
+      {/* Zoomable/Pannable image area with swipe support */}
+      <div
+        className="w-full h-full"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          transform: swipeOffset !== 0 ? `translateX(${swipeOffset}px)` : undefined,
+          transition: swipeOffset === 0 ? 'transform 0.3s ease-out' : undefined,
+        }}
       >
-        <TransformComponent
-          wrapperStyle={{
-            width: '100vw',
-            height: '100vh',
-          }}
-          contentStyle={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+        <TransformWrapper
+          ref={transformRef}
+          initialScale={1}
+          minScale={0.1}
+          maxScale={10}
+          centerOnInit
+          wheel={{ step: 0.05, smoothStep: 0.005 }}
+          pinch={{ step: 5 }}
+          doubleClick={{ mode: 'toggle', step: 2 }}
+          panning={{ velocityDisabled: false }}
+          onTransformed={handleScaleChange}
         >
-          <img
-            src={image.url}
-            alt={image.prompt}
-            className="max-w-full max-h-full object-contain select-none pointer-events-none"
-            draggable={false}
-            style={{
-              maxWidth: '95vw',
-              maxHeight: '95vh',
+          <TransformComponent
+            wrapperStyle={{
+              width: '100vw',
+              height: '100vh',
             }}
-          />
-        </TransformComponent>
-      </TransformWrapper>
+            contentStyle={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <img
+              src={image.url}
+              alt={image.prompt}
+              className="max-w-full max-h-full object-contain select-none pointer-events-none"
+              draggable={false}
+              style={{
+                maxWidth: '95vw',
+                maxHeight: '95vh',
+              }}
+            />
+          </TransformComponent>
+        </TransformWrapper>
+      </div>
+      
+      {/* Mobile swipe indicator dots */}
+      {images.length > 1 && (
+        <div className={cn(
+          'absolute bottom-20 left-1/2 -translate-x-1/2 z-10',
+          'flex items-center gap-1.5 px-3 py-1.5',
+          'rounded-full bg-black/40 backdrop-blur-sm',
+          'transition-opacity duration-300',
+          'sm:hidden', // Only show on mobile
+          showControls ? 'opacity-100' : 'opacity-0'
+        )}>
+          {images.slice(Math.max(0, currentIndex - 2), Math.min(images.length, currentIndex + 3)).map((_, i) => {
+            const actualIndex = Math.max(0, currentIndex - 2) + i;
+            return (
+              <button
+                key={actualIndex}
+                onClick={() => {
+                  const diff = actualIndex - currentIndex;
+                  if (diff > 0) {
+                    for (let j = 0; j < diff; j++) onNavigate?.('next');
+                  } else {
+                    for (let j = 0; j < -diff; j++) onNavigate?.('prev');
+                  }
+                }}
+                className={cn(
+                  'w-2 h-2 rounded-full transition-all duration-200',
+                  actualIndex === currentIndex 
+                    ? 'bg-white w-4' 
+                    : 'bg-white/40 hover:bg-white/60'
+                )}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Keyboard hints */}
       <div

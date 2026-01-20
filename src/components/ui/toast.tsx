@@ -15,10 +15,12 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      'fixed bottom-0 right-0 z-[100]',
-      'flex max-h-screen w-full flex-col-reverse p-4',
-      'sm:flex-col md:max-w-[420px]',
-      'safe-bottom',
+      'fixed z-[100]',
+      // Mobile: center bottom with safe area
+      'bottom-[calc(80px+env(safe-area-inset-bottom)+16px)] left-4 right-4',
+      // Desktop: bottom right
+      'sm:bottom-4 sm:left-auto sm:right-4 sm:w-auto sm:max-w-[380px]',
+      'flex flex-col gap-2',
       className
     )}
     {...props}
@@ -28,49 +30,53 @@ ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
   [
-    'group pointer-events-auto relative flex w-full items-center justify-between gap-4 overflow-hidden',
-    'rounded-[var(--radius-lg)] border p-4 pr-10',
-    'shadow-[var(--shadow-xl)]',
+    'group pointer-events-auto relative flex w-full items-center gap-3 overflow-hidden',
+    'rounded-2xl border p-3 pr-10',
+    // Glassmorphic effect
+    'backdrop-blur-xl backdrop-saturate-150',
+    'shadow-2xl shadow-black/20',
     'transition-all duration-300',
     // Swipe
     'data-[swipe=cancel]:translate-x-0',
     'data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)]',
     'data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]',
     'data-[swipe=move]:transition-none',
-    // Animation
+    // Animation - slide up on mobile
     'data-[state=open]:animate-in data-[state=closed]:animate-out',
     'data-[swipe=end]:animate-out',
     'data-[state=closed]:fade-out-80',
-    'data-[state=open]:slide-in-from-bottom-full',
-    'data-[state=closed]:slide-out-to-right-full',
+    'data-[state=open]:slide-in-from-bottom-5',
+    'data-[state=closed]:slide-out-to-bottom-5',
+    // Mobile touch friendly
+    'min-h-[52px]',
   ].join(' '),
   {
     variants: {
       variant: {
         default: [
-          'border-[var(--border-default)]',
-          'bg-[var(--bg-elevated)]',
+          'border-white/10',
+          'bg-[var(--bg-elevated)]/80',
           'text-[var(--text-primary)]',
         ].join(' '),
         success: [
-          'border-[var(--success)]/20',
-          'bg-[var(--success-muted)]',
-          'text-[var(--success)]',
+          'border-emerald-500/30',
+          'bg-emerald-950/80',
+          'text-emerald-300',
         ].join(' '),
         destructive: [
-          'border-[var(--error)]/20',
-          'bg-[var(--error-muted)]',
-          'text-[var(--error)]',
+          'border-red-500/30',
+          'bg-red-950/80',
+          'text-red-300',
         ].join(' '),
         warning: [
-          'border-[var(--warning)]/20',
-          'bg-[var(--warning-muted)]',
-          'text-[var(--warning)]',
+          'border-amber-500/30',
+          'bg-amber-950/80',
+          'text-amber-300',
         ].join(' '),
         info: [
-          'border-[var(--info)]/20',
-          'bg-[var(--info-muted)]',
-          'text-[var(--info)]',
+          'border-blue-500/30',
+          'bg-blue-950/80',
+          'text-blue-300',
         ].join(' '),
       },
     },
@@ -156,10 +162,7 @@ const ToastTitle = React.forwardRef<
   <ToastPrimitives.Title
     ref={ref}
     className={cn(
-      'text-[var(--text-sm)] font-medium',
-      'text-[var(--text-primary)]',
-      'group-[.destructive]:text-[var(--error)]',
-      'group-[.success]:text-[var(--success)]',
+      'text-[13px] font-medium leading-tight',
       className
     )}
     {...props}
@@ -174,10 +177,7 @@ const ToastDescription = React.forwardRef<
   <ToastPrimitives.Description
     ref={ref}
     className={cn(
-      'text-[var(--text-sm)]',
-      'text-[var(--text-secondary)]',
-      'group-[.destructive]:text-[var(--error)]/80',
-      'group-[.success]:text-[var(--success)]/80',
+      'text-[12px] opacity-80 leading-tight',
       className
     )}
     {...props}

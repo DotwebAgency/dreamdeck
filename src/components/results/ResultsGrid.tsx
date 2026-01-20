@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { 
@@ -20,6 +20,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
 import { generateFilename, formatTimestamp } from '@/lib/download';
+import { OPEN_VIEWER_EVENT } from '@/components/jobs/InlineJobQueue';
+import type { GeneratedImage } from '@/types';
 
 export function ResultsGrid() {
   const { results, removeResult, clearResults } = useGenerationStore();
@@ -27,6 +29,20 @@ export function ResultsGrid() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
+  
+  // Listen for external viewer open events (from job queue)
+  useEffect(() => {
+    const handleOpenViewer = (event: CustomEvent<GeneratedImage>) => {
+      const image = event.detail;
+      const index = results.findIndex(r => r.id === image.id);
+      if (index >= 0) {
+        setViewerIndex(index);
+      }
+    };
+    
+    window.addEventListener(OPEN_VIEWER_EVENT, handleOpenViewer as EventListener);
+    return () => window.removeEventListener(OPEN_VIEWER_EVENT, handleOpenViewer as EventListener);
+  }, [results]);
 
   const selectedCount = selectedIds.size;
   const allSelected = selectedCount === results.length && results.length > 0;

@@ -347,13 +347,17 @@ export const useGenerationStore = create<GenerationState>()(
         name: 'dreamdeck-storage',
         storage: createJSONStorage(() => localStorage),
         partialize: (state) => ({
-          // Only persist settings, not ephemeral state
+          // Persist settings
           prompt: state.prompt,
           resolution: state.resolution,
           seed: state.seed,
           numImages: state.numImages,
           mode: state.mode,
           autoSave: state.autoSave,
+          // PERSIST RESULTS - users lose images without this!
+          results: state.results,
+          // Persist reference slots
+          referenceSlots: state.referenceSlots,
           // Don't persist jobs (they're ephemeral)
         }),
       }

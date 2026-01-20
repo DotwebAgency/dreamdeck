@@ -1,16 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   Sparkles, 
   RefreshCw, 
   ChevronUp, 
+  ChevronDown,
   History,
   Trash2,
   MoreHorizontal,
   X,
   Plus,
-  Layers
+  Layers,
+  Send
 } from 'lucide-react';
 import { useGenerationStore, useCanGenerate, useActiveJobCount, useQueueCapacity } from '@/store/useGenerationStore';
 import { cn } from '@/lib/utils';
@@ -36,11 +38,44 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
   const activeJobCount = useActiveJobCount();
   const queueCapacity = useQueueCapacity();
   
-  const [isPromptExpanded, setIsPromptExpanded] = useState(false);
-  const [showActions, setShowActions] = useState(false);
-  const [lastSeed, setLastSeed] = useState<number | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   const isQueueFull = queueCapacity.used >= queueCapacity.max;
+  const hasResults = results.length > 0;
+  const activeCount = activeJobCount;
+  const estimatedCost = numImages * COST_PER_IMAGE;
+  const isQueueActive = activeCount > 0;
+  
+  // Handle keyboard visibility on Android
+  useEffect(() => {
+    const handleResize = () => {
+      // On Android, window.innerHeight shrinks when keyboard appears
+      const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      const windowHeight = window.innerHeight;
+      setIsKeyboardVisible(viewportHeight < windowHeight * 0.75);
+    };
+    
+    window.visualViewport?.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+  
+  // Auto-scroll textarea into view when expanded
+  useEffect(() => {
+    if (isExpanded && textareaRef.current) {
+      setTimeout(() => {
+        textareaRef.current?.focus();
+        textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }, [isExpanded]);
 
   const handleGenerate = () => {
     if (!prompt.trim()) {
@@ -70,201 +105,174 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
         title: activeJobCount > 0 ? `Queued (#${position})` : 'Generating',
         description: `${resolution.width}×${resolution.height} • ${numImages} image${numImages > 1 ? 's' : ''}`,
       });
+      // Collapse after generating
+      setIsExpanded(false);
     }
   };
 
-  const handleRegenerate = () => {
-    handleGenerate();
-  };
-
-  const handleClearAll = () => {
+  const handleClear = () => {
     setPrompt('');
-    setShowActions(false);
+    textareaRef.current?.focus();
   };
-
-  const hasResults = results.length > 0;
-  const activeCount = activeJobCount;
-  const estimatedCost = numImages * COST_PER_IMAGE;
-  const isQueueActive = activeCount > 0;
+  
+  const handleClose = () => {
+    setIsExpanded(false);
+    textareaRef.current?.blur();
+  };
 
   return (
     <>
-      {/* Expanded Prompt Overlay */}
-      {isPromptExpanded && (
+      {/* Full-screen prompt editor overlay */}
+      {isExpanded && (
         <div 
-          className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm"
-          onClick={() => setIsPromptExpanded(false)}
-        />
-      )}
-
-      {/* Expanded Prompt Sheet */}
-      <div
-        className={cn(
-          'fixed left-0 right-0 z-[80] transition-all duration-300',
-          'bg-[var(--bg-elevated)] border-t border-[var(--border-default)]',
-          'rounded-t-2xl shadow-2xl',
-          isPromptExpanded
-            ? 'bottom-0 max-h-[60vh]'
-            : '-bottom-full'
-        )}
-      >
-        <div className="p-4 pb-safe">
-          {/* Handle */}
-          <div className="w-10 h-1 bg-[var(--border-strong)] rounded-full mx-auto mb-4" />
-          
+          ref={containerRef}
+          className={cn(
+            'fixed inset-0 z-[100]',
+            'flex flex-col',
+            'bg-[var(--bg-void)]'
+          )}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] uppercase tracking-[0.08em] text-[var(--text-muted)]">
-              Prompt
+          <div className={cn(
+            'flex items-center justify-between px-4 h-14',
+            'bg-[var(--bg-void)] border-b border-[var(--border-subtle)]',
+            'safe-top'
+          )}>
+            <button
+              onClick={handleClose}
+              className="flex items-center gap-2 text-[var(--text-secondary)]"
+            >
+              <ChevronDown className="w-5 h-5" />
+              <span className="text-[13px]">Done</span>
+            </button>
+            
+            <span className={cn(
+              'text-[11px] tabular-nums',
+              prompt.length > 1800 ? 'text-[var(--error)]' : 
+              prompt.length > 1500 ? 'text-amber-400' : 
+              'text-[var(--text-muted)]'
+            )}>
+              {prompt.length}/2000
             </span>
-            <div className="flex items-center gap-2">
-              <span className={cn(
-                'text-[10px] tabular-nums',
-                prompt.length > 1800 ? 'text-[var(--error)]' : 
-                prompt.length > 1500 ? 'text-[var(--warning)]' : 
-                'text-[var(--text-muted)]'
-              )}>
-                {prompt.length}/2000
-              </span>
+            
+            {prompt.length > 0 && (
               <button
-                onClick={() => setIsPromptExpanded(false)}
-                className="p-2 -m-2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                onClick={handleClear}
+                className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)]"
               >
-                <X className="w-5 h-5" />
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          
+          {/* Textarea - takes remaining space */}
+          <div className="flex-1 p-4">
+            <textarea
+              ref={textareaRef}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Describe your image in detail...
+
+Examples:
+• A serene mountain landscape at golden hour
+• Portrait of a cyberpunk character with neon lights
+• Minimalist product photo with soft shadows"
+              className={cn(
+                'w-full h-full',
+                'bg-transparent',
+                'text-[16px] text-[var(--text-primary)]', // 16px prevents iOS zoom
+                'placeholder:text-[var(--text-subtle)]',
+                'resize-none',
+                'focus:outline-none',
+                'leading-relaxed'
+              )}
+              maxLength={2000}
+            />
+          </div>
+          
+          {/* Bottom action bar - stays above keyboard */}
+          <div 
+            className={cn(
+              'px-4 py-3',
+              'bg-[var(--bg-deep)] border-t border-[var(--border-default)]',
+              'safe-bottom'
+            )}
+            style={{
+              // On Android, this keeps the bar visible above keyboard
+              paddingBottom: isKeyboardVisible ? '8px' : 'calc(8px + env(safe-area-inset-bottom))'
+            }}
+          >
+            <div className="flex items-center gap-3">
+              {/* Resolution badge */}
+              <div className="flex-1">
+                <span className="text-[11px] text-[var(--text-muted)]">
+                  {resolution.width}×{resolution.height} • ~${estimatedCost.toFixed(3)}
+                </span>
+              </div>
+              
+              {/* Generate button */}
+              <button
+                onClick={handleGenerate}
+                disabled={!canGenerate}
+                className={cn(
+                  'flex items-center gap-2 px-5 py-3 rounded-xl',
+                  'text-[14px] font-medium',
+                  'transition-all duration-150',
+                  'active:scale-[0.97]',
+                  canGenerate
+                    ? 'bg-gradient-to-b from-[var(--text-primary)] to-[var(--text-secondary)] text-[var(--bg-void)] shadow-lg'
+                    : 'bg-[var(--bg-soft)] text-[var(--text-muted)]'
+                )}
+              >
+                {isQueueActive ? (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    <span>Add to Queue</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span>Generate</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
-
-          {/* Textarea */}
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Describe your image in detail..."
-            className={cn(
-              'w-full h-40 p-4',
-              'bg-[var(--bg-deep)]',
-              'border border-[var(--border-default)]',
-              'rounded-lg',
-              'text-[14px] text-[var(--text-primary)]',
-              'placeholder:text-[var(--text-subtle)]',
-              'resize-none',
-              'focus:outline-none focus:border-[var(--border-focus)]',
-              'transition-colors'
-            )}
-            maxLength={2000}
-            autoFocus
-          />
-
-          {/* Actions */}
-          <div className="flex items-center justify-between mt-3">
-            {prompt.length > 0 && (
-              <button
-                onClick={handleClearAll}
-                className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)] hover:text-[var(--error)]"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Clear
-              </button>
-            )}
-            <button
-              onClick={() => {
-                setIsPromptExpanded(false);
-                if (canGenerate) handleGenerate();
-              }}
-              disabled={!canGenerate}
-              className={cn(
-                'ml-auto px-5 py-2.5 rounded-lg',
-                'text-[13px] font-medium',
-                'flex items-center gap-2',
-                'transition-all duration-150',
-                canGenerate
-                  ? 'bg-gradient-to-b from-[var(--text-primary)] to-[var(--text-secondary)] text-[var(--bg-void)] shadow-lg active:scale-[0.97]'
-                  : 'bg-[var(--bg-soft)] text-[var(--text-muted)] cursor-not-allowed'
-              )}
-            >
-              {isQueueActive ? <Plus className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-              {isQueueActive ? 'Add to Queue' : 'Generate'}
-            </button>
-          </div>
         </div>
-      </div>
-
-      {/* Quick Actions Sheet */}
-      {showActions && (
-        <>
-          <div 
-            className="fixed inset-0 z-[60]"
-            onClick={() => setShowActions(false)}
-          />
-          <div className={cn(
-            'fixed left-4 right-4 z-[65]',
-            'bottom-[calc(80px+env(safe-area-inset-bottom)+8px)]',
-            'bg-[var(--bg-elevated)]',
-            'border border-[var(--border-default)]',
-            'rounded-xl shadow-2xl',
-            'animate-scale-in'
-          )}>
-            <button
-              onClick={onHistoryClick}
-              className={cn(
-                'w-full flex items-center gap-3 px-4 py-3.5',
-                'text-[13px] text-[var(--text-secondary)]',
-                'hover:bg-[var(--bg-hover)] active:bg-[var(--bg-active)]',
-                'border-b border-[var(--border-subtle)]',
-                'rounded-t-xl'
-              )}
-            >
-              <History className="w-4 h-4" />
-              Prompt History
-            </button>
-            <button
-              onClick={handleClearAll}
-              className={cn(
-                'w-full flex items-center gap-3 px-4 py-3.5',
-                'text-[13px] text-[var(--error)]',
-                'hover:bg-[var(--error-muted)] active:bg-[var(--error-muted)]',
-                'rounded-b-xl'
-              )}
-            >
-              <Trash2 className="w-4 h-4" />
-              Clear Prompt
-            </button>
-          </div>
-        </>
       )}
 
       {/* Bottom Bar */}
       <div 
         className={cn(
           'fixed left-0 right-0 bottom-0 z-50',
-          'bg-[var(--bg-deep)]/98 backdrop-blur-xl',
+          'bg-[var(--bg-deep)]/95 backdrop-blur-xl',
           'border-t border-[var(--border-default)]',
-          'safe-bottom'
+          isExpanded && 'hidden'
         )}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div className="flex items-center gap-2 px-3 py-3">
-          {/* Prompt Preview / Expand */}
+          {/* Prompt Preview / Expand - main touch target */}
           <button
-            onClick={() => setIsPromptExpanded(true)}
+            onClick={() => setIsExpanded(true)}
             className={cn(
-              'flex-1 flex items-center gap-2 px-3 py-2.5 h-12',
+              'flex-1 flex items-center gap-2 px-4 py-3 h-12',
               'bg-[var(--bg-mid)]',
               'border border-[var(--border-default)]',
-              'rounded-lg',
+              'rounded-xl',
               'text-left',
-              'touch-target',
-              'transition-colors',
-              'hover:border-[var(--border-strong)]'
+              'active:scale-[0.98]',
+              'transition-all duration-150'
             )}
           >
             <div className="flex-1 min-w-0">
               {prompt ? (
-                <span className="text-[13px] text-[var(--text-secondary)] line-clamp-1">
+                <span className="text-[14px] text-[var(--text-secondary)] line-clamp-1">
                   {prompt}
                 </span>
               ) : (
-                <span className="text-[13px] text-[var(--text-muted)] italic">
-                  Tap to write prompt...
+                <span className="text-[14px] text-[var(--text-subtle)]">
+                  Write your prompt...
                 </span>
               )}
             </div>
@@ -273,76 +281,31 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
 
           {/* Generate Button */}
           <button
-            onClick={hasResults && !isQueueActive ? handleRegenerate : handleGenerate}
+            onClick={handleGenerate}
             disabled={!canGenerate}
             className={cn(
-              'relative h-12 px-5 rounded-lg',
-              'font-medium text-[13px]',
+              'relative h-12 px-4 rounded-xl',
+              'font-medium text-[14px]',
               'flex items-center justify-center gap-2',
-              'touch-target',
               'transition-all duration-150',
               'active:scale-[0.97]',
-              'overflow-hidden',
               canGenerate
-                ? 'shadow-lg'
-                : 'bg-[var(--bg-soft)] text-[var(--text-muted)] cursor-not-allowed'
+                ? 'bg-gradient-to-b from-[var(--text-primary)] to-[var(--text-secondary)] text-[var(--bg-void)] shadow-lg'
+                : 'bg-[var(--bg-soft)] text-[var(--text-muted)]'
             )}
-            style={{
-              background: canGenerate 
-                ? 'linear-gradient(180deg, var(--text-primary) 0%, var(--text-secondary) 100%)'
-                : undefined,
-              color: canGenerate ? 'var(--bg-void)' : undefined
-            }}
           >
             {isQueueActive ? (
               <>
-                <Plus className="w-4 h-4" />
-                <span>Queue</span>
-                <span className="flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded-full bg-[var(--bg-void)]/20 text-[10px]">
-                  <Layers className="w-3 h-3" />
+                <Plus className="w-5 h-5" />
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--bg-void)]/20 text-[11px] font-bold">
                   {activeCount}
                 </span>
               </>
-            ) : hasResults ? (
-              <>
-                <RefreshCw className="w-4 h-4" />
-                <span className="hidden xs:inline">Regenerate</span>
-              </>
             ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                <span>Generate</span>
-              </>
+              <Sparkles className="w-5 h-5" />
             )}
-          </button>
-
-          {/* Quick Actions */}
-          <button
-            onClick={() => setShowActions(!showActions)}
-            className={cn(
-              'h-12 w-12 flex items-center justify-center',
-              'bg-[var(--bg-mid)]',
-              'border border-[var(--border-default)]',
-              'rounded-lg',
-              'text-[var(--text-muted)]',
-              'touch-target',
-              'transition-colors',
-              'hover:border-[var(--border-strong)] hover:text-[var(--text-secondary)]',
-              showActions && 'border-[var(--border-strong)] text-[var(--text-secondary)]'
-            )}
-          >
-            <MoreHorizontal className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Cost estimate */}
-        {canGenerate && (
-          <div className="px-4 pb-2 -mt-1">
-            <span className="text-[10px] text-[var(--text-subtle)] tabular-nums">
-              ~${estimatedCost.toFixed(3)} • {resolution.width}×{resolution.height}
-            </span>
-          </div>
-        )}
       </div>
     </>
   );

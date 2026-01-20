@@ -112,12 +112,30 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
     <>
       <header
         className={cn(
-          'fixed top-0 left-0 right-0 z-50 h-14',
+          'fixed top-0 left-0 right-0 z-50',
           'bg-[var(--bg-void)]/98 glass-subtle',
           'border-b border-[var(--border-subtle)]'
         )}
       >
-        <div className="h-full px-4 lg:px-6 flex items-center justify-between">
+        {/* Trial expiration banner */}
+        <div className={cn(
+          'h-7 flex items-center justify-center gap-2',
+          'bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10',
+          'border-b border-amber-500/20',
+          'text-[11px] text-amber-400/90'
+        )}>
+          <span>Your trial has expired.</span>
+          <a 
+            href="https://tryvoiceink.com/buy" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="font-medium text-amber-300 hover:text-amber-200 underline underline-offset-2"
+          >
+            Upgrade to VoiceInk Pro
+          </a>
+        </div>
+        
+        <div className="h-14 px-4 lg:px-6 flex items-center justify-between">
           {/* Left: Logo + Status combined */}
           <div className="flex items-center gap-3">
             {/* Mobile menu button */}
