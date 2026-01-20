@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Sparkles, Zap, Plus, Layers } from 'lucide-react';
-import { useGenerationStore, useCanGenerate, useActiveJobCount } from '@/store/useGenerationStore';
+import { Sparkles, Zap, Plus, Layers, AlertCircle } from 'lucide-react';
+import { useGenerationStore, useCanGenerate, useActiveJobCount, useQueueCapacity } from '@/store/useGenerationStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
@@ -18,15 +18,28 @@ export function GenerateButton() {
   } = useGenerationStore();
   
   const canGenerate = useCanGenerate();
-  const activeCount = useActiveJobCount(); // Use count (number) instead of array
+  const activeCount = useActiveJobCount();
+  const queueCapacity = useQueueCapacity();
   const [isAdding, setIsAdding] = useState(false);
   
+  const isQueueFull = queueCapacity.used >= queueCapacity.max;
+  const hasPrompt = prompt.trim().length > 0;
+  
   const handleGenerate = useCallback(() => {
-    if (!prompt.trim()) {
+    if (!hasPrompt) {
       toast({
         variant: 'destructive',
         title: 'Enter a prompt',
         description: 'Describe what you want to create',
+      });
+      return;
+    }
+    
+    if (isQueueFull) {
+      toast({
+        variant: 'warning',
+        title: 'Queue full',
+        description: `Maximum ${MAX_QUEUED_JOBS} jobs allowed. Wait for some to complete.`,
       });
       return;
     }
@@ -36,20 +49,16 @@ export function GenerateButton() {
     const jobId = createJob();
     
     if (jobId) {
+      const position = queueCapacity.used + 1;
       toast({
-        title: 'Added to queue',
+        variant: 'success',
+        title: activeCount > 0 ? `Added to queue (#${position})` : 'Generation started',
         description: `${resolution.width}×${resolution.height} • ${numImages} image${numImages > 1 ? 's' : ''}`,
-      });
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Queue full',
-        description: `Maximum ${MAX_QUEUED_JOBS} jobs allowed. Wait for some to complete.`,
       });
     }
     
     setTimeout(() => setIsAdding(false), 200);
-  }, [prompt, resolution, numImages, createJob]);
+  }, [hasPrompt, isQueueFull, createJob, queueCapacity.used, activeCount, resolution, numImages]);
 
   const estimatedCost = numImages * COST_PER_IMAGE;
   const is4K = resolution.width >= 4000 || resolution.height >= 4000;
@@ -122,34 +131,55 @@ export function GenerateButton() {
         <span className="tabular-nums">
           ~${estimatedCost.toFixed(3)} • {resolution.width}×{resolution.height}
         </span>
-        <span className="flex items-center gap-1">
-          <kbd 
-            className={cn(
-              'px-2 py-1',
-              'rounded-[var(--radius-xs)]',
-              'bg-[var(--bg-soft)]',
-              'border border-[var(--border-default)]',
-              'text-[var(--text-secondary)] font-mono text-[10px]',
-              'shadow-[var(--shadow-xs)]'
-            )}
-          >
-            ⌘
-          </kbd>
-          <span>+</span>
-          <kbd 
-            className={cn(
-              'px-2 py-1',
-              'rounded-[var(--radius-xs)]',
-              'bg-[var(--bg-soft)]',
-              'border border-[var(--border-default)]',
-              'text-[var(--text-secondary)] font-mono text-[10px]',
-              'shadow-[var(--shadow-xs)]'
-            )}
-          >
-            ↵
-          </kbd>
-        </span>
+        <div className="flex items-center gap-3">
+          {/* Queue capacity indicator */}
+          {activeCount > 0 && (
+            <span className={cn(
+              'tabular-nums',
+              isQueueFull && 'text-[var(--warning)]'
+            )}>
+              {queueCapacity.used}/{queueCapacity.max} slots
+            </span>
+          )}
+          <span className="flex items-center gap-1">
+            <kbd 
+              className={cn(
+                'px-2 py-1',
+                'rounded-[var(--radius-xs)]',
+                'bg-[var(--bg-soft)]',
+                'border border-[var(--border-default)]',
+                'text-[var(--text-secondary)] font-mono text-[10px]',
+                'shadow-[var(--shadow-xs)]'
+              )}
+            >
+              ⌘
+            </kbd>
+            <span>+</span>
+            <kbd 
+              className={cn(
+                'px-2 py-1',
+                'rounded-[var(--radius-xs)]',
+                'bg-[var(--bg-soft)]',
+                'border border-[var(--border-default)]',
+                'text-[var(--text-secondary)] font-mono text-[10px]',
+                'shadow-[var(--shadow-xs)]'
+              )}
+            >
+              ↵
+            </kbd>
+          </span>
+        </div>
       </div>
+      
+      {/* Queue full warning */}
+      {isQueueFull && (
+        <div className="flex items-center gap-2 p-2 rounded-lg bg-[var(--warning-muted)] border border-[var(--warning)]/20">
+          <AlertCircle className="w-4 h-4 text-[var(--warning)]" />
+          <span className="text-[11px] text-[var(--warning)]">
+            Queue full. Wait for jobs to complete.
+          </span>
+        </div>
+      )}
     </div>
   );
 }

@@ -12,7 +12,7 @@ import {
   Plus,
   Layers
 } from 'lucide-react';
-import { useGenerationStore, useCanGenerate, useActiveJobCount } from '@/store/useGenerationStore';
+import { useGenerationStore, useCanGenerate, useActiveJobCount, useQueueCapacity } from '@/store/useGenerationStore';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
 import { COST_PER_IMAGE, MAX_QUEUED_JOBS } from '@/lib/constants';
@@ -33,11 +33,14 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
   } = useGenerationStore();
 
   const canGenerate = useCanGenerate();
-  const activeJobCount = useActiveJobCount(); // Use count (number) instead of array
+  const activeJobCount = useActiveJobCount();
+  const queueCapacity = useQueueCapacity();
   
   const [isPromptExpanded, setIsPromptExpanded] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [lastSeed, setLastSeed] = useState<number | null>(null);
+  
+  const isQueueFull = queueCapacity.used >= queueCapacity.max;
 
   const handleGenerate = () => {
     if (!prompt.trim()) {
@@ -48,19 +51,24 @@ export function MobileBottomBar({ onSettingsClick, onHistoryClick }: MobileBotto
       });
       return;
     }
+    
+    if (isQueueFull) {
+      toast({
+        variant: 'warning',
+        title: 'Queue full',
+        description: `Maximum ${MAX_QUEUED_JOBS} jobs allowed.`,
+      });
+      return;
+    }
 
     const jobId = createJob();
     
     if (jobId) {
+      const position = queueCapacity.used + 1;
       toast({
-        title: 'Added to queue',
+        variant: 'success',
+        title: activeJobCount > 0 ? `Queued (#${position})` : 'Generating',
         description: `${resolution.width}×${resolution.height} • ${numImages} image${numImages > 1 ? 's' : ''}`,
-      });
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Queue full',
-        description: `Maximum ${MAX_QUEUED_JOBS} jobs allowed.`,
       });
     }
   };

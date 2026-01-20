@@ -52,6 +52,8 @@ interface GenerationState {
   failJob: (jobId: string, error: string) => void;
   removeJob: (jobId: string) => void;
   clearCompletedJobs: () => void;
+  retryJob: (jobId: string) => string | null;  // Retry a failed job, returns new job ID
+  cancelJob: (jobId: string) => void;  // Cancel a queued job
   
   // Actions - Results
   addResults: (images: GeneratedImage[]) => void;
@@ -66,6 +68,9 @@ interface GenerationState {
   getQueuedJobs: () => GenerationJob[];
   getProcessingJobs: () => GenerationJob[];
   canQueueJob: () => boolean;
+  getQueuePosition: (jobId: string) => number;  // Returns position in queue (1-based), 0 if not queued
+  getTotalQueueCost: () => number;  // Total estimated cost of pending jobs
+  getQueueCapacity: () => { used: number; max: number };  // Queue usage info
 }
 
 // === INITIAL STATE HELPERS ===
@@ -236,6 +241,47 @@ export const useGenerationStore = create<GenerationState>()(
             jobs: state.jobs.filter(job => job.status !== 'completed' && job.status !== 'failed'),
           }));
         },
+        
+        retryJob: (jobId) => {
+          const state = get();
+          const failedJob = state.jobs.find(j => j.id === jobId && j.status === 'failed');
+          
+          if (!failedJob) return null;
+          
+          // Check if queue is full
+          const activeJobs = state.jobs.filter(j => j.status !== 'completed' && j.status !== 'failed').length;
+          if (activeJobs >= MAX_QUEUED_JOBS) return null;
+          
+          // Create new job from failed job settings
+          const newJobId = generateId();
+          const newJob: GenerationJob = {
+            ...failedJob,
+            id: newJobId,
+            status: 'queued',
+            progress: 0,
+            error: undefined,
+            results: undefined,
+            createdAt: Date.now(),
+            startedAt: undefined,
+            completedAt: undefined,
+          };
+          
+          set((state) => ({
+            jobs: [...state.jobs.filter(j => j.id !== jobId), newJob],
+          }));
+          
+          return newJobId;
+        },
+        
+        cancelJob: (jobId) => {
+          set((state) => ({
+            jobs: state.jobs.filter(job => {
+              if (job.id !== jobId) return true;
+              // Only allow canceling queued jobs (not processing)
+              return job.status !== 'queued';
+            }),
+          }));
+        },
 
         // === RESULTS ACTIONS ===
         addResults: (images) => {
@@ -275,6 +321,26 @@ export const useGenerationStore = create<GenerationState>()(
           const state = get();
           const activeJobs = state.jobs.filter(j => j.status !== 'completed' && j.status !== 'failed').length;
           return activeJobs < MAX_QUEUED_JOBS && state.prompt.trim().length > 0;
+        },
+        
+        getQueuePosition: (jobId) => {
+          const state = get();
+          const pendingJobs = state.jobs.filter(j => j.status === 'queued' || j.status === 'processing');
+          const index = pendingJobs.findIndex(j => j.id === jobId);
+          return index >= 0 ? index + 1 : 0;
+        },
+        
+        getTotalQueueCost: () => {
+          const state = get();
+          const COST_PER_IMAGE = 0.027;
+          const pendingJobs = state.jobs.filter(j => j.status === 'queued' || j.status === 'processing');
+          return pendingJobs.reduce((total, job) => total + (job.numImages * COST_PER_IMAGE), 0);
+        },
+        
+        getQueueCapacity: () => {
+          const state = get();
+          const activeJobs = state.jobs.filter(j => j.status !== 'completed' && j.status !== 'failed').length;
+          return { used: activeJobs, max: MAX_QUEUED_JOBS };
         },
       }),
       {
@@ -321,6 +387,23 @@ export const useQueuedJobCount = () => useGenerationStore(
 );
 export const useCompletedJobCount = () => useGenerationStore(
   (state) => state.jobs.filter(j => j.status === 'completed').length
+);
+export const useFailedJobCount = () => useGenerationStore(
+  (state) => state.jobs.filter(j => j.status === 'failed').length
+);
+export const useQueueCapacity = () => useGenerationStore(
+  (state) => {
+    const active = state.jobs.filter(j => j.status !== 'completed' && j.status !== 'failed').length;
+    return { used: active, max: MAX_QUEUED_JOBS };
+  }
+);
+export const useTotalQueueCost = () => useGenerationStore(
+  (state) => {
+    const COST = 0.027;
+    return state.jobs
+      .filter(j => j.status === 'queued' || j.status === 'processing')
+      .reduce((t, j) => t + j.numImages * COST, 0);
+  }
 );
 
 // === COMPUTED SELECTORS ===

@@ -1,10 +1,71 @@
 'use client';
 
-import { Wand2, ImagePlus, Settings2 } from 'lucide-react';
+import { Wand2, ImagePlus, Settings2, Loader2 } from 'lucide-react';
 import { OrbitAnimation } from '@/components/ui/orbit-animation';
 import { cn } from '@/lib/utils';
+import { useActiveJobCount, useProcessingJobCount, useQueuedJobCount } from '@/store/useGenerationStore';
 
 export function EmptyState() {
+  const activeJobCount = useActiveJobCount();
+  const processingCount = useProcessingJobCount();
+  const queuedCount = useQueuedJobCount();
+  
+  // If jobs are active, show processing state instead
+  if (activeJobCount > 0) {
+    return (
+      <div 
+        className={cn(
+          'flex items-center justify-center',
+          'min-h-[calc(100vh-56px-80px)]',
+          'p-8',
+          'animate-fade-in'
+        )}
+      >
+        <div className="text-center max-w-lg w-full">
+          {/* Processing animation */}
+          <div className="flex justify-center mb-8">
+            <div className="relative">
+              <OrbitAnimation size="lg" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
+              </div>
+            </div>
+          </div>
+
+          {/* Status */}
+          <h2 
+            className={cn(
+              'text-xl font-medium tracking-tight',
+              'text-[var(--text-primary)]',
+              'mb-3'
+            )}
+          >
+            Creating your images
+          </h2>
+
+          <p 
+            className={cn(
+              'text-[13px] leading-relaxed',
+              'text-[var(--text-muted)]',
+              'mb-6 max-w-sm mx-auto'
+            )}
+          >
+            {processingCount > 0 && `${processingCount} generating`}
+            {processingCount > 0 && queuedCount > 0 && ' • '}
+            {queuedCount > 0 && `${queuedCount} in queue`}
+          </p>
+
+          {/* Tip */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-soft)] border border-[var(--border-subtle)]">
+            <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
+            <span className="text-[12px] text-[var(--text-secondary)]">
+              You can add more jobs while these process
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div 
       className={cn(

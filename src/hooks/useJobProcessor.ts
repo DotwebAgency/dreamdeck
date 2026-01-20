@@ -7,6 +7,57 @@ import { toast } from '@/components/ui/use-toast';
 import { triggerBalanceRefresh } from '@/lib/events';
 import type { GeneratedImage, GenerationJob } from '@/types';
 
+// Request notification permission on load
+const requestNotificationPermission = () => {
+  if (typeof window !== 'undefined' && 'Notification' in window) {
+    if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }
+};
+
+// Send browser notification
+const sendNotification = (title: string, body: string, imageUrl?: string) => {
+  if (typeof window === 'undefined' || !('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  if (document.hasFocus()) return; // Don't notify if tab is focused
+  
+  try {
+    const notification = new Notification(title, {
+      body,
+      icon: imageUrl || '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: 'dreamdeck-generation',
+    } as NotificationOptions);
+    
+    // Auto-close after 5 seconds
+    setTimeout(() => notification.close(), 5000);
+    
+    // Focus window on click
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+  } catch (e) {
+    // Notifications may fail in some environments
+    console.warn('Notification failed:', e);
+  }
+};
+
+// Update page title with job count
+const updatePageTitle = (processingCount: number, queuedCount: number) => {
+  if (typeof document === 'undefined') return;
+  
+  const baseTitle = 'DreamDeck';
+  
+  if (processingCount > 0 || queuedCount > 0) {
+    const total = processingCount + queuedCount;
+    document.title = `(${total}) ${baseTitle}`;
+  } else {
+    document.title = baseTitle;
+  }
+};
+
 // Process a single job - standalone function to avoid dependency issues
 async function processJobAsync(job: GenerationJob) {
   const jobId = job.id;
@@ -68,6 +119,13 @@ async function processJobAsync(job: GenerationJob) {
         description: `${job.resolution.width}×${job.resolution.height} • Seed: ${data.seed || 'random'}`,
       });
       
+      // Send browser notification if tab not focused
+      sendNotification(
+        `Generated ${results.length} image${results.length > 1 ? 's' : ''}`,
+        job.prompt.slice(0, 100) + (job.prompt.length > 100 ? '...' : ''),
+        results[0]?.url
+      );
+      
       triggerBalanceRefresh();
     } else {
       throw new Error('No images were generated');
@@ -93,6 +151,19 @@ export function useJobProcessor() {
   const jobs = useJobs();
   const processingIdsRef = useRef<Set<string>>(new Set());
   
+  // Request notification permission on mount
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
+  
+  // Update page title based on job status
+  useEffect(() => {
+    const processingCount = jobs.filter(j => j.status === 'processing').length;
+    const queuedCount = jobs.filter(j => j.status === 'queued').length;
+    updatePageTitle(processingCount, queuedCount);
+  }, [jobs]);
+  
+  // Process jobs
   useEffect(() => {
     const queuedJobs = jobs.filter(j => j.status === 'queued');
     const processingJobs = jobs.filter(j => j.status === 'processing');

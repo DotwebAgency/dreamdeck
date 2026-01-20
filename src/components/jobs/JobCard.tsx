@@ -19,7 +19,8 @@ import { cn } from '@/lib/utils';
 
 interface JobCardProps {
   job: GenerationJob;
-  onRetry?: () => void;
+  queuePosition?: number;
+  onImageClick?: (url: string) => void;
 }
 
 const STATUS_CONFIG = {
@@ -69,8 +70,10 @@ const PROGRESS_MESSAGES = [
   'Almost there...',
 ];
 
-export const JobCard = memo(function JobCard({ job, onRetry }: JobCardProps) {
-  const { removeJob } = useGenerationStore();
+export const JobCard = memo(function JobCard({ job, queuePosition, onImageClick }: JobCardProps) {
+  const removeJob = useGenerationStore((s) => s.removeJob);
+  const retryJob = useGenerationStore((s) => s.retryJob);
+  const cancelJob = useGenerationStore((s) => s.cancelJob);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [messageIndex, setMessageIndex] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -117,6 +120,14 @@ export const JobCard = memo(function JobCard({ job, onRetry }: JobCardProps) {
   
   const handleDismiss = () => {
     removeJob(job.id);
+  };
+  
+  const handleRetry = () => {
+    retryJob(job.id);
+  };
+  
+  const handleCancel = () => {
+    cancelJob(job.id);
   };
   
   return (
@@ -233,24 +244,39 @@ export const JobCard = memo(function JobCard({ job, onRetry }: JobCardProps) {
             )}
             
             {job.status === 'queued' && (
-              <span className="text-[10px] text-[var(--text-subtle)]">
-                Waiting in queue...
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-[var(--text-subtle)]">
+                  {queuePosition ? `Position ${queuePosition} in queue` : 'Waiting in queue...'}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCancel}
+                  className="h-5 px-2 text-[10px] text-[var(--text-muted)] hover:text-[var(--error)]"
+                >
+                  <X className="w-3 h-3 mr-1" />
+                  Cancel
+                </Button>
+              </div>
             )}
           </div>
         )}
         
-        {/* Completed results preview */}
+        {/* Completed results preview - clickable thumbnails */}
         {job.status === 'completed' && job.results && job.results.length > 0 && (
           <div className="flex gap-2 pt-1">
             {job.results.slice(0, 4).map((result, idx) => (
-              <div 
+              <button 
                 key={result.id}
+                onClick={() => onImageClick?.(result.url)}
                 className={cn(
                   'relative w-12 h-12 rounded-lg overflow-hidden',
                   'bg-[var(--bg-soft)]',
                   'border border-[var(--border-subtle)]',
-                  'animate-scale-in'
+                  'animate-scale-in',
+                  'transition-all duration-150',
+                  'hover:border-[var(--border-strong)] hover:scale-105',
+                  'focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]'
                 )}
                 style={{ animationDelay: `${idx * 75}ms` }}
               >
@@ -260,7 +286,7 @@ export const JobCard = memo(function JobCard({ job, onRetry }: JobCardProps) {
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
-              </div>
+              </button>
             ))}
             {job.results.length > 4 && (
               <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-[var(--bg-soft)] border border-[var(--border-subtle)]">
@@ -272,7 +298,7 @@ export const JobCard = memo(function JobCard({ job, onRetry }: JobCardProps) {
           </div>
         )}
         
-        {/* Error message */}
+        {/* Error message with retry */}
         {job.status === 'failed' && job.error && (
           <div className="flex items-start gap-2 p-2 rounded-lg bg-[var(--error)]/10 border border-[var(--error)]/20">
             <AlertCircle className="w-4 h-4 text-[var(--error)] shrink-0 mt-0.5" />
@@ -280,17 +306,15 @@ export const JobCard = memo(function JobCard({ job, onRetry }: JobCardProps) {
               <p className="text-[11px] text-[var(--error)] line-clamp-2">
                 {job.error}
               </p>
-              {onRetry && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onRetry}
-                  className="mt-2 h-7 text-[11px] gap-1.5 text-[var(--error)] hover:text-[var(--error)]"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  Retry
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRetry}
+                className="mt-2 h-7 text-[11px] gap-1.5 text-[var(--error)] hover:text-[var(--error)] hover:bg-[var(--error)]/10"
+              >
+                <RefreshCw className="w-3 h-3" />
+                Retry
+              </Button>
             </div>
           </div>
         )}
